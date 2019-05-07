@@ -125,9 +125,9 @@ void StartDefaultTask (void *pvParameters)
         err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
         err = io_fs_file_read(&file, &boot_count, sizeof(boot_count));
 
-        boot_count += 1;
-        err = io_fs_file_rewind(&file);
-        err = io_fs_file_write(&file, &boot_count, sizeof(boot_count));
+//        boot_count += 1;
+//        err = io_fs_file_rewind(&file);
+//        err = io_fs_file_write(&file, &boot_count, sizeof(boot_count));
         err = io_fs_file_close(&file);
         err = io_fs_unmount();
 

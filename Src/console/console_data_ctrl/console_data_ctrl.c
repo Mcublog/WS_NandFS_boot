@@ -22,8 +22,8 @@ void console_init(console_data_ctrl_t *con_data_h, UART_HandleTypeDef *huart, DM
 */
 void console_start_rx(console_data_ctrl_t *con_data_h)
 {
-  uint8_t dummy[5]={0, 0, 0, 0, 0};//буфер дл€ очистки заголовка пакета
-  if (con_data_h->huart!=NULL)
+  uint8_t dummy[5] = {0, 0, 0, 0, 0};//буфер дл€ очистки заголовка пакета
+  if (con_data_h->huart != NULL)
   { 
     HAL_UART_DMAStop(con_data_h->huart); 
     HAL_UART_Receive_DMA(con_data_h->huart, con_data_h->buf, con_data_h->maxsize);  
@@ -44,14 +44,14 @@ void console_start_rx(console_data_ctrl_t *con_data_h)
 */
 uint32_t console_check_data(console_data_ctrl_t *con_data_h)
 {
-  uint32_t bytes_rx=0;
+  uint32_t bytes_rx = 0;
   uint32_t i = 0;
   if (con_data_h->huart != NULL)
   { 
     i = (con_data_h->maxsize) - (con_data_h->hdma_uart_rx->Instance->NDTR);
   }
   else i = 5;
-  if ( i >=5 )
+  if (i >= 5)
   {
     bytes_rx = console_cmd_get_size(con_data_h->buf);
     if (con_data_h->huart == NULL) i = bytes_rx;
@@ -62,7 +62,7 @@ uint32_t console_check_data(console_data_ctrl_t *con_data_h)
     else
     {
         //провер€ю стартовый заголовок, если битый, то пересбрасываю DMA
-        if ( check_start_stop_symb(con_data_h->buf))return bytes_rx;  
+        if ( check_start_stop_symb(con_data_h->buf)) return bytes_rx;  
         else
         {
             console_start_rx(con_data_h);

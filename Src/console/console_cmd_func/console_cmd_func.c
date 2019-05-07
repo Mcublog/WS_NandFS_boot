@@ -17,9 +17,9 @@ static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);
 -----------------------------------------------------------*/
 void cmd_function_crc32_error(console_cmd_t* cl_cmd, uint8_t* buf)
 {
-    console_form_head("ERROR_MSG", "string", "1" , cl_cmd);
+    console_form_head("ERROR_MSG", "string", "1", cl_cmd);
     
-    console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"CRC32_FAIL");
+    console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"CRC32_FAIL");
     
     console_cmd_form_complete(cl_cmd, buf);
 }
@@ -32,9 +32,9 @@ void cmd_function_crc32_error(console_cmd_t* cl_cmd, uint8_t* buf)
 -----------------------------------------------------------*/
 void cmd_function_pkt_corrupt(console_cmd_t* cl_cmd, uint8_t* buf)
 {
-    console_form_head("ERROR_MSG", "string", "1" , cl_cmd);
+    console_form_head("ERROR_MSG", "string", "1", cl_cmd);
     
-    console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"PKT_CORRUPT");
+    console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"PKT_CORRUPT");
     
     console_cmd_form_complete(cl_cmd, buf); 
 }
@@ -59,9 +59,9 @@ static const cmd_t cmd_list[]=
 void cmd_fuction_caller(console_cmd_t* cl_cmd, console_data_ctrl_t *con_h)
 {
     volatile cmd_id_t id = get_cmd_id(&cl_cmd->name, cmd_list);
-    if (cmd_list[id].func_cmd!=NULL)
+    if (cmd_list[id].func_cmd != NULL)
     {
-        cmd_list[id].func_cmd(cl_cmd,con_h->buf);
+        cmd_list[id].func_cmd(cl_cmd, con_h->buf);
     }
     else
     {
