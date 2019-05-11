@@ -655,11 +655,6 @@
               <FilePath>..\Src\console\console_cmd_func\console_cmd_func.c</FilePath>
             </File>
             <File>
-              <FileName>console_data_ctrl.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\console\console_data_ctrl\console_data_ctrl.c</FilePath>
-            </File>
-            <File>
               <FileName>console_data_parse.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Src\console\console_data_parse\console_data_parse.c</FilePath>

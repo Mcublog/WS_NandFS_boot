@@ -2,14 +2,14 @@
 
 #include "init_main.h"
 #include "stm32f4xx_hal.h"
-#include "stdio.h"
+#include <stdio.h>
+#include <string.h>
 
-#include "console_data_ctrl/console_data_ctrl.h"
 #include "console_data_parse/console_data_parse.h"
 #include "console_cmd_func/console_cmd_func.h"
 
 //-----------------------Local variables and fucntion-------------------------
-uint8_t *_buf = NULL;
+//uint8_t *_buf = NULL;
 console_data_ctrl_t _con = {0};
 console_cmd_t _cmd_rx = {0};
 //----------------------------------------------------------------------------
@@ -20,9 +20,11 @@ console_cmd_t _cmd_rx = {0};
 /return:
 -----------------------------------------------------------*/
 void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
-{
-    _buf = pbuf;
-    console_init(&_con, ser->phuart, ser->phdma, _buf, size);
+{   
+    _con.ser       = ser;
+    _con.buf       = pbuf;
+    _con.maxsize   = size;
+    
     io_console_start_rx();
 }
 
@@ -33,7 +35,20 @@ void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
 -----------------------------------------------------------*/
 void io_console_start_rx(void)
 {
-    console_start_rx(&_con);
+    //console_start_rx(&_con);
+    
+    io_serial_type_h type = io_serial_get_type(_con.ser);
+    if (type == IO_UART)
+    { 
+        HAL_UART_DMAStop(_con.ser->phuart); 
+        HAL_UART_Receive_DMA(_con.ser->phuart, _con.buf, _con.maxsize);  
+        _con.ser->phuart->Instance->CR1|=UART_IT_IDLE;
+    }
+    else
+    {
+        uint8_t dummy[5] = {0, 0, 0, 0, 0};//буфер для очистки заголовка пакета
+        memcpy((void*)_con.buf, (void*)dummy, sizeof(dummy));
+    }    
 }
 
 /*-----------------------------------------------------------
@@ -43,7 +58,36 @@ void io_console_start_rx(void)
 -----------------------------------------------------------*/
 uint32_t io_console_data_check(void)
 {
-    return console_check_data(&_con);
+    uint32_t bytes_rx = 0;
+    uint32_t i = 0;
+    io_serial_type_h type = io_serial_get_type(_con.ser);
+    
+    if (type == IO_UART)
+    { 
+        i = (_con.maxsize) - (_con.ser->phdma->Instance->NDTR);
+    }
+    else i = 5;
+  
+    if (i >= 5)
+    {
+        bytes_rx = console_cmd_get_size(_con.buf);
+        if (type == IO_UART) i = bytes_rx;
+        if (i != bytes_rx)
+        {
+            return 0;
+        }
+        else
+        {
+            //проверяю стартовый заголовок, если битый, то пересбрасываю DMA
+            if ( check_start_stop_symb(_con.buf)) return bytes_rx;  
+            else
+            {
+                io_console_start_rx();
+                return 0;
+            }
+        }
+    }
+    else return 0;
 }
 
 /*-----------------------------------------------------------
@@ -53,7 +97,7 @@ uint32_t io_console_data_check(void)
 -----------------------------------------------------------*/
 uint32_t io_console_parse(void)
 {
-    return console_cmd_parse(_buf, &_cmd_rx);
+    return console_cmd_parse(_con.buf, &_cmd_rx);
 }
 
 /*-----------------------------------------------------------
@@ -71,14 +115,18 @@ void io_console_process(uint32_t status)
     else if (status == CLI_CRC_ERROR)
     {
         printf("Data rx -- CRC32 Error\r\n");
-        cmd_function_crc32_error(&_cmd_rx, _buf);
+        cmd_function_crc32_error(&_cmd_rx, _con.buf);
     }
     else
     {
         printf("Data rx -- Corrupted\r\n");
-        cmd_function_pkt_corrupt(&_cmd_rx, _buf);
+        cmd_function_pkt_corrupt(&_cmd_rx, _con.buf);
     }
-    if (_con.huart != NULL) HAL_UART_Transmit(_con.huart, _buf, _cmd_rx.size_all, 1000);
+    
+    if (io_serial_get_type(_con.ser) == IO_UART)
+    {
+        HAL_UART_Transmit(_con.ser->phuart, _con.buf, _cmd_rx.size_all, 1000);
+    }
     io_console_start_rx();
 }
 
@@ -90,5 +138,8 @@ void io_console_process(uint32_t status)
 -----------------------------------------------------------*/
 void io_console_continue_woking(void)
 {
-    console_idle_on(&_con);
+    if (io_serial_get_type(_con.ser) == IO_UART)
+    {
+        _con.ser->phuart->Instance->CR1 |= UART_IT_IDLE;
+    }    
 }

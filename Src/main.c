@@ -44,8 +44,7 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
-//    MX_DMA_Init();
-    io_serial_init(&_ser);    
+    io_serial_init(&_ser);
     io_nand_init();
     //----------------------------------------------------------------------------
 

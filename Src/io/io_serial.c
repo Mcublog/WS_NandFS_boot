@@ -4,7 +4,6 @@
 #include "stm32f4xx_hal.h"
 #include "stdio.h"
 
-#include "console_data_ctrl/console_data_ctrl.h"
 #include "console_data_parse/console_data_parse.h"
 #include "console_cmd_func/console_cmd_func.h"
 
@@ -25,6 +24,8 @@ void io_serial_init(io_serial_h *ser)
     
     ser->phuart = &huart3;
     ser->phdma  = &hdma_usart3_rx;
+    
+    ser->type = IO_UART;
 }
 
 /*-----------------------------------------------------------
@@ -39,4 +40,14 @@ void io_serial_deinit(io_serial_h *ser)
     
     ser->phuart = NULL;
     ser->phdma  = NULL;    
+}
+
+/*-----------------------------------------------------------
+/brief: Get serial type
+/param: Pointer to serial handler
+/return: Type io_serial
+-----------------------------------------------------------*/
+io_serial_type_h io_serial_get_type(io_serial_h *ser)
+{
+    return ser->type;
 }

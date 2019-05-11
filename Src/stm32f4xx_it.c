@@ -24,7 +24,6 @@
 #include "cmsis_os.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "console_data_ctrl/console_data_ctrl.h"
 #include "console_data_parse/console_data_parse.h"
 /* USER CODE END Includes */
 
