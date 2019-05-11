@@ -9,7 +9,7 @@ typedef struct
     io_serial_h *ser;
     uint8_t     *buf;
     uint32_t    maxsize;
-}console_data_ctrl_t;
+}io_console_handler_t;
 
 void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size);
 void io_console_start_rx(void);

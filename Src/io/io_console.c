@@ -10,8 +10,8 @@
 
 //-----------------------Local variables and fucntion-------------------------
 //uint8_t *_buf = NULL;
-console_data_ctrl_t _con = {0};
-console_cmd_t _cmd_rx = {0};
+io_console_handler_t    _con = {0};
+console_cmd_t           _cmd_rx = {0};
 //----------------------------------------------------------------------------
 
 /*-----------------------------------------------------------
@@ -34,10 +34,9 @@ void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
 /return:
 -----------------------------------------------------------*/
 void io_console_start_rx(void)
-{
-    //console_start_rx(&_con);
-    
+{   
     io_serial_type_h type = io_serial_get_type(_con.ser);
+    
     if (type == IO_UART)
     { 
         HAL_UART_DMAStop(_con.ser->phuart); 
@@ -58,8 +57,7 @@ void io_console_start_rx(void)
 -----------------------------------------------------------*/
 uint32_t io_console_data_check(void)
 {
-    uint32_t bytes_rx = 0;
-    uint32_t i = 0;
+    uint32_t bytes_rx = 0, i = 0;
     io_serial_type_h type = io_serial_get_type(_con.ser);
     
     if (type == IO_UART)

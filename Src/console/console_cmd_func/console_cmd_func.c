@@ -54,7 +54,7 @@ void cmd_function_pkt_corrupt(console_cmd_t* cl_cmd, uint8_t* buf)
 /хедер обработки консоли
 /вовращает:
 -----------------------------------------------------------*/                       
-void cmd_fuction_caller(console_cmd_t* cl_cmd, console_data_ctrl_t *con_h)
+void cmd_fuction_caller(console_cmd_t* cl_cmd, io_console_handler_t *con_h)
 {
     volatile cmd_id_t id = get_cmd_id(&cl_cmd->name, cmd_list);
     if (cmd_list[id].func_cmd != NULL)

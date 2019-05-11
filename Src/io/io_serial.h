@@ -6,8 +6,9 @@
 
 typedef enum
 {
+    IO_NONE,    
     IO_UART,
-    IO_USB
+    IO_USB,
 }io_serial_type_h;
 
 typedef struct

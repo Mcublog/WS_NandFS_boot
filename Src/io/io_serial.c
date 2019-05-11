@@ -18,14 +18,17 @@ extern DMA_HandleTypeDef    hdma_usart3_rx;
 /return:
 -----------------------------------------------------------*/
 void io_serial_init(io_serial_h *ser)
-{
-    MX_DMA_Init();
-    MX_USART3_UART_Init();
-    
-    ser->phuart = &huart3;
-    ser->phdma  = &hdma_usart3_rx;
-    
+{   
     ser->type = IO_UART;
+    
+    if (ser->type == IO_UART)
+    {
+        MX_DMA_Init();
+        MX_USART3_UART_Init();
+    
+        ser->phuart = &huart3;
+        ser->phdma  = &hdma_usart3_rx;        
+    }
 }
 
 /*-----------------------------------------------------------
@@ -35,11 +38,15 @@ void io_serial_init(io_serial_h *ser)
 -----------------------------------------------------------*/
 void io_serial_deinit(io_serial_h *ser)
 {
-    MX_DMA_Deinit();
-    MX_USART3_UART_Deinit();
+    if (ser->type == IO_UART)
+    {
+        ser->type = IO_NONE;
+        MX_DMA_Deinit();
+        MX_USART3_UART_Deinit();
     
-    ser->phuart = NULL;
-    ser->phdma  = NULL;    
+        ser->phuart = NULL;
+        ser->phdma  = NULL;
+    }
 }
 
 /*-----------------------------------------------------------
