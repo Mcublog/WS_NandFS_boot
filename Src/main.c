@@ -5,9 +5,11 @@
 
 #include "init_main.h"
 #include "test.h"
+
 #include "io_nand.h"
 #include "io_fs.h"
 #include "io_serial.h"
+#include "io_console.h"
 
 //-----------------------Types and definition---------------------------------
 // NOTE: Redefine in stm32f4xx_hal_nand.h for Waveshare board
@@ -16,6 +18,7 @@
 //----------------------------------------------------------------------------
 
 //-----------------------Local variables and fucntion-------------------------
+io_serial_h _ser = {0};
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -42,7 +45,7 @@ int main(void)
     SystemClock_Config();
     MX_GPIO_Init();
 //    MX_DMA_Init();
-    io_serial_init();    
+    io_serial_init(&_ser);    
     io_nand_init();
     //----------------------------------------------------------------------------
 
@@ -55,8 +58,8 @@ int main(void)
     //----------------------------------------------------------------------------
 
     //-----------------------Creating tasks---------------------------------------
-    xTaskCreate(StartDefaultTask, "StartDefaultTask", configMINIMAL_STACK_SIZE * 16, NULL, tskIDLE_PRIORITY,     NULL);
-    xTaskCreate(ConsoleMsgTask,  "ConsoleMsgTask",  configMINIMAL_STACK_SIZE * 16, NULL, (tskIDLE_PRIORITY + 1), NULL);
+    xTaskCreate(StartDefaultTask, "StartDefaultTask", configMINIMAL_STACK_SIZE * 16, NULL, (tskIDLE_PRIORITY),     NULL);
+    xTaskCreate(ConsoleMsgTask,   "ConsoleMsgTask",   configMINIMAL_STACK_SIZE * 16, NULL, (tskIDLE_PRIORITY + 1), NULL);
     //----------------------------------------------------------------------------
 
     //-----------------------Semaphores takes-------------------------------------
@@ -137,7 +140,7 @@ void StartDefaultTask (void *pvParameters)
 //------------------------------------------------------------------------------------
 
 //------------------ Console command Processing --------------------------------------
-#define BUFFSIZE (8192)
+#define BUFFSIZE        (8192)
 uint8_t buf[BUFFSIZE] = {0};
 
 void ConsoleMsgTask (void *pvParameters)
@@ -145,21 +148,21 @@ void ConsoleMsgTask (void *pvParameters)
     printf("ConsoleMsgkTask...Start\r\n");
     uint32_t data_count=0;
 
-    io_serial_console(buf, BUFFSIZE);
+    io_console_init(&_ser, buf, BUFFSIZE);
     uint32_t cli_status=0;  
     
     while (1)
     {
         xSemaphoreTake(xbConsoleRx, 500);
-        data_count = io_serial_console_data_check();
-        if (data_count)//данные полностью получены
+        data_count = io_console_data_check();
+        if (data_count)
         {
-            cli_status = io_serial_console_parse();
-            io_serial_console_process(cli_status);
+            cli_status = io_console_parse();
+            io_console_process(cli_status);
         }
         else
         {
-            io_serial_console_continue_woking();  
+            io_console_continue_woking();  
         }
     }
 }

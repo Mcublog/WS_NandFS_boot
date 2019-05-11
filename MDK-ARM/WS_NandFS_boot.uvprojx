@@ -609,6 +609,11 @@
               <FileType>1</FileType>
               <FilePath>..\Src\io\io_serial.c</FilePath>
             </File>
+            <File>
+              <FileName>io_console.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\io\io_console.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

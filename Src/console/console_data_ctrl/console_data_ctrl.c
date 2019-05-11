@@ -22,7 +22,6 @@ void console_init(console_data_ctrl_t *con_data_h, UART_HandleTypeDef *huart, DM
 */
 void console_start_rx(console_data_ctrl_t *con_data_h)
 {
-  uint8_t dummy[5] = {0, 0, 0, 0, 0};//буфер для очистки заголовка пакета
   if (con_data_h->huart != NULL)
   { 
     HAL_UART_DMAStop(con_data_h->huart); 
@@ -31,6 +30,7 @@ void console_start_rx(console_data_ctrl_t *con_data_h)
   }
   else
   {
+      uint8_t dummy[5] = {0, 0, 0, 0, 0};//буфер для очистки заголовка пакета
       memcpy((void*)con_data_h->buf, (void*)dummy, sizeof(dummy));
   }
 }
@@ -51,6 +51,7 @@ uint32_t console_check_data(console_data_ctrl_t *con_data_h)
     i = (con_data_h->maxsize) - (con_data_h->hdma_uart_rx->Instance->NDTR);
   }
   else i = 5;
+  
   if (i >= 5)
   {
     bytes_rx = console_cmd_get_size(con_data_h->buf);

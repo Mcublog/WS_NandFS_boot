@@ -84,6 +84,16 @@ void MX_USART3_UART_Init(void)
 
 }
 
+/**
+  * @brief USART3 Deinitialization Function
+  * @param None
+  * @retval None
+  */
+void MX_USART3_UART_Deinit(void)
+{
+    HAL_UART_DeInit(&huart3);
+}
+
 /** 
   * Enable DMA controller clock
   */
@@ -96,6 +106,19 @@ void MX_DMA_Init(void)
   /* DMA1_Stream1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+}
+
+/** 
+  * Disable DMA controller clock
+  */
+void MX_DMA_Deinit(void)
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_DISABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
 }
 
 /**

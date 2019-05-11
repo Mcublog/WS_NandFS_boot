@@ -4,8 +4,13 @@
 #include "stm32f4xx_hal.h"
 
 void SystemClock_Config(void);
+
 void MX_USART3_UART_Init(void);
+void MX_USART3_UART_Deinit(void);
+
 void MX_DMA_Init(void);
+void MX_DMA_Deinit(void);
+
 void MX_GPIO_Init(void);
 void MX_FSMC_Init(void);
 

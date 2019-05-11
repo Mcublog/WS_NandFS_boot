@@ -2,15 +2,15 @@
 #define IO_SERIAL_H
 
 #include <stdint.h>
+#include "stm32f4xx_hal.h"
 
-void io_serial_init(void);
+typedef struct
+{
+    UART_HandleTypeDef *phuart;
+    DMA_HandleTypeDef  *phdma;
+}io_serial_h;
 
-void io_serial_console(uint8_t *pbuf, uint32_t size);
-void io_serial_console_start_rx(void);
-uint32_t io_serial_console_data_check(void);
-uint32_t io_serial_console_parse(void);
-void io_serial_console_process(uint32_t status);
-
-void io_serial_console_continue_woking(void);
+void io_serial_init(io_serial_h *ser);
+void io_serial_deinit(io_serial_h *ser);
 
 #endif // IO_SERIAL_H
