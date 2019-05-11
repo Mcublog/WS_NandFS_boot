@@ -29,7 +29,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+extern xSemaphoreHandle xbConsoleRx;//get cmd from console
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -63,7 +63,6 @@ extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN EV */
-extern xSemaphoreHandle xbConsoleRx;//get cmd from console
 /* USER CODE END EV */
 
 /******************************************************************************/

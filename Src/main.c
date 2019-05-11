@@ -153,16 +153,7 @@ void ConsoleMsgTask (void *pvParameters)
     while (1)
     {
         xSemaphoreTake(xbConsoleRx, 500);
-        data_count = io_console_data_check();
-        if (data_count)
-        {
-            cli_status = io_console_parse();
-            io_console_process(cli_status);
-        }
-        else
-        {
-            io_console_continue_woking();  
-        }
+        io_console_process();
     }
 }
 //------------------------------------------------------------------------------------
