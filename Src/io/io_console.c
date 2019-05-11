@@ -123,7 +123,7 @@ void io_console_process(uint32_t status)
     
     if (io_serial_get_type(_con.ser) == IO_UART)
     {
-        HAL_UART_Transmit(_con.ser->phuart, _con.buf, _cmd_rx.size_all, 1000);
+        io_serial_tx(_con.ser, _con.buf, _cmd_rx.size_all);
     }
     io_console_start_rx();
 }
@@ -136,8 +136,5 @@ void io_console_process(uint32_t status)
 -----------------------------------------------------------*/
 void io_console_continue_woking(void)
 {
-    if (io_serial_get_type(_con.ser) == IO_UART)
-    {
-        _con.ser->phuart->Instance->CR1 |= UART_IT_IDLE;
-    }    
+    io_serial_set_idle_irq(_con.ser);
 }

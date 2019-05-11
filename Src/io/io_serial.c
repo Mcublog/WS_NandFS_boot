@@ -58,3 +58,28 @@ io_serial_type_h io_serial_get_type(io_serial_h *ser)
 {
     return ser->type;
 }
+
+/*-----------------------------------------------------------
+/brief: Set Idle IRQ
+/param: Pointer to serial handler
+/return:
+-----------------------------------------------------------*/
+void io_serial_set_idle_irq(io_serial_h *ser)
+{
+    if (ser->type == IO_UART)
+    {        
+        ser->phuart->Instance->CR1 |= UART_IT_IDLE;
+    }
+}
+
+/*-----------------------------------------------------------
+/brief: Serial TX
+/param: Pointer to serial handler
+/param: Pointer to TX bufer
+/param: Number bytes to TX
+/return:
+-----------------------------------------------------------*/
+void io_serial_tx(io_serial_h *ser, uint8_t *buf, uint32_t size)
+{   
+    HAL_UART_Transmit(ser->phuart, buf, size, 1000);
+}

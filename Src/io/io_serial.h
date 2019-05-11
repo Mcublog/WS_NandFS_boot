@@ -22,5 +22,8 @@ void io_serial_init(io_serial_h *ser);
 void io_serial_deinit(io_serial_h *ser);
 
 io_serial_type_h io_serial_get_type(io_serial_h *ser);
+void io_serial_set_idle_irq(io_serial_h *ser);
+
+void io_serial_tx(io_serial_h *ser, uint8_t *buf, uint32_t size);
 
 #endif // IO_SERIAL_H
