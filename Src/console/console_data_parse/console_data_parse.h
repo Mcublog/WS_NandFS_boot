@@ -26,6 +26,7 @@ typedef struct
 typedef enum
 {
 	EMPTY = 0,
+    Get_Name,
     ID_LAST_CMD
 }cmd_id_t;//таблица команд, индекс сответствует команде
 

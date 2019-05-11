@@ -6,16 +6,17 @@
 #include "stm32f4xx_hal.h"
 
 //-----------------------Local variables and fucntion-------------------------
-static const cmd_t cmd_list[]=
+static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf);
+static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);    
+
+static const cmd_t cmd_list[] =
 {
-                         {EMPTY,            "EMPTY",        NULL},
-//------------------------------------------------------------------------------                        
-
-//------------------------------------------------------------------------------                         
-                         {ID_LAST_CMD,      "LAST_CMD",         NULL}
+                        {EMPTY,            "EMPTY",             NULL},
+//------------------------------------------------------------------------------
+                        {Get_Name,         "GET_NAME",          &_get_name},
+//------------------------------------------------------------------------------
+                        {ID_LAST_CMD,      "LAST_CMD",          NULL}
 };
-
-static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);
 //----------------------------------------------------------------------------
 
 /*-----------------------------------------------------------
@@ -80,5 +81,21 @@ static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf)
     console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"UNKNOWN_CMD");
     
     console_cmd_form_complete(cl_cmd, buf);    
+}
+
+/*-----------------------------------------------------------
+/ѕолучить им€ устройства, используетс€ дл€ нахождени€ на ком порте
+/принимает: указетель на консольную команду и
+/буфер дл€ отправки
+/вовращает:
+-----------------------------------------------------------*/ 
+#define DEVICE_NAME "Test_boot_v0"
+static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
+{
+    uint8_t p0[]=DEVICE_NAME;
+
+    console_form_head("GET_NAME", "string", "1" , cl_cmd);
+    console_form_comp(&cl_cmd->param.p[0], p0);
+    console_cmd_form_complete(cl_cmd, buf);     
 }
 
