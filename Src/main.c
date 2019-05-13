@@ -19,7 +19,7 @@
 
 //-----------------------Local variables and fucntion-------------------------
 io_serial_h _ser;
-static void _serial_idle_handler(io_serial_h *ser)
+static void _serial_idle_handler(io_serial_h *ser);
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -67,7 +67,7 @@ int main(void)
     //----------------------------------------------------------------------------
 
     //----------------------------------------------------------------------------
-    io_serial_callback_reg(&ser, IDLE_CALLBACK, (io_callback_handler_t) _serial_idle_handler);
+    io_serial_callback_reg(&_ser, IDLE_CALLBACK, (io_callback_handler_t) _serial_idle_handler);
 
     //----------------------------------------------------------------------------
     io_fs_file file;
@@ -149,10 +149,7 @@ uint8_t buf[BUFFSIZE] = {0};
 void ConsoleMsgTask (void *pvParameters)
 {
     printf("ConsoleMsgkTask...Start\r\n");
-    uint32_t data_count=0;
-
     io_console_init(&_ser, buf, BUFFSIZE);
-    uint32_t cli_status=0;  
     
     while (1)
     {

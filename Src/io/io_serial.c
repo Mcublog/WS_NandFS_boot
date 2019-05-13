@@ -1,6 +1,7 @@
 #include "io_serial.h"
 
 #include <stdio.h>
+#include <string.h>
 
 //---------- HW Specific ---------------------
 #include "init_main.h"
@@ -170,7 +171,7 @@ static uint32_t _hw_get_uart_irq_status(io_serial_h *ser)
 void io_serial_init(io_serial_h *ser, io_serial_type_h type)
 {   
     ser->type = type;
-    for (io_callback_id_t i = 0; i < LAST_CALLBACK; i++)
+    for (uint32_t i = 0; i < LAST_CALLBACK; i++)
     {
         ser->callback_list[i] = NULL;
     }
@@ -289,7 +290,7 @@ void io_serial_callback_call(io_serial_h *ser)
     {
         uint32_t status = _hw_get_uart_irq_status(ser);
 
-        for (io_callback_id_t i = 0; i < LAST_CALLBACK; i++)
+        for (uint32_t i = 0; i < LAST_CALLBACK; i++)
         {
             if (status & (1 << i))
             {

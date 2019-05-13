@@ -13,8 +13,8 @@ typedef enum
 typedef enum
 {
     TX_CALLBACK = 0,
-    RX_CALLBACK = 1,
-    IDLE_CALLBACK = 2,
+    RX_CALLBACK,
+    IDLE_CALLBACK,
 //-----------------    
     LAST_CALLBACK
 }io_callback_id_t;
