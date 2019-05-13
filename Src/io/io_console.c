@@ -89,7 +89,9 @@ static void _console_continue_woking(void)
 
 /*-----------------------------------------------------------
 /brief: Init serial console
-/param:
+/param: Pointer to serial handler
+/param: Pointer to console data buffer
+/param: Maximum buffer size
 /return:
 -----------------------------------------------------------*/
 void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
@@ -102,7 +104,7 @@ void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
 }
 
 /*-----------------------------------------------------------
-/brief: Process console status
+/brief: Сonsole processing
 /param:
 /return:
 -----------------------------------------------------------*/
@@ -128,11 +130,11 @@ void io_console_process(void)
         {
             printf("Data rx -- Corrupted\r\n");
             cmd_function_pkt_corrupt(&_cmd_rx, _con.buf);
-        }        
+        }
     }
     else
     {
-        _console_continue_woking();  
+        _console_continue_woking();
     }
     
     io_serial_tx(_con.ser, _con.buf, _cmd_rx.size_all);

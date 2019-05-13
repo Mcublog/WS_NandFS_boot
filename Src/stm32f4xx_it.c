@@ -24,12 +24,12 @@
 #include "cmsis_os.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "console_data_parse/console_data_parse.h"
+#include "io_serial.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-extern xSemaphoreHandle xbConsoleRx;//get cmd from console
+extern io_serial_h _ser;
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -185,13 +185,7 @@ void USART3_IRQHandler(void)
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
-    uint32_t isrflags   = READ_REG(huart3.Instance->SR);
-    if (READ_BIT(isrflags, USART_SR_IDLE))
-    {
-        //CONSOLE_IDLE_OFF(huart3);
-        huart3.Instance->CR1&=(~UART_IT_IDLE);
-        xSemaphoreGiveFromISR(xbConsoleRx, NULL);
-    }
+  io_serial_callback_call(&_ser);
   /* USER CODE END USART3_IRQn 1 */
 }
 

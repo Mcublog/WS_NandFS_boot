@@ -1,23 +1,27 @@
 #include "io_serial.h"
 
+#include <stdio.h>
+
+//---------- HW Specific ---------------------
 #include "init_main.h"
 #include "stm32f4xx_hal.h"
-#include "stdio.h"
-
-#include "console_data_parse/console_data_parse.h"
-#include "console_cmd_func/console_cmd_func.h"
+//---------- HW Specific ---------------------
 
 //-----------------------Local variables and fucntion-------------------------
+
+//---------- HW Specific ---------------------
 extern UART_HandleTypeDef   huart3;
 extern DMA_HandleTypeDef    hdma_usart3_rx;
+//---------- HW Specific ---------------------
 
 // HW Specific function
-static void _hw_init(io_serial_h *ser);
-static void _hw_deinit(io_serial_h *ser);
-static void _hw_set_idle_irq(io_serial_h *ser);
-static void _hw_tx_data(io_serial_h *ser, uint8_t *buf, uint32_t size);
+static void     _hw_init(io_serial_h *ser);
+static void     _hw_deinit(io_serial_h *ser);
+static void     _hw_set_idle_irq(io_serial_h *ser);
+static void     _hw_tx_data(io_serial_h *ser, uint8_t *buf, uint32_t size);
 static uint32_t _hw_get_dma_bytes_waiting(io_serial_h *ser);
-static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, uint32_t size);
+static void     _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, uint32_t size);
+static uint32_t _hw_get_uart_irq_status(io_serial_h *ser);
 //----------------------------------------------------------------------------
 
 /*-----------------------------------------------------------
@@ -29,9 +33,10 @@ static void _hw_init(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
     {
-        // HW Specific        
+        //---------- HW Specific ---------------------
         MX_DMA_Init();
         MX_USART3_UART_Init();
+        //---------- HW Specific ---------------------
 
         ser->phuart = &huart3;
         ser->phdma  = &hdma_usart3_rx;        
@@ -49,9 +54,10 @@ static void _hw_deinit(io_serial_h *ser)
     {        
         ser->type = IO_NONE;
         
-        // HW Specific        
+        //---------- HW Specific ---------------------
         MX_DMA_Deinit();
         MX_USART3_UART_Deinit();
+        //---------- HW Specific ---------------------
     
         ser->phuart = NULL;
         ser->phdma  = NULL;
@@ -67,9 +73,10 @@ static void _hw_set_idle_irq(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
     {
-        // HW Specific
+        //---------- HW Specific ---------------------
         UART_HandleTypeDef *p = ser->phuart;
         p->Instance->CR1 |= UART_IT_IDLE;
+        //---------- HW Specific ---------------------
     }
 }
 
@@ -84,9 +91,10 @@ static void _hw_tx_data(io_serial_h *ser, uint8_t *buf, uint32_t size)
 {
     if (ser->type == IO_UART)
     {   
-        // HW Specific
+        //---------- HW Specific ---------------------
         UART_HandleTypeDef *p = ser->phuart;
         HAL_UART_Transmit(p, buf, size, 1000);
+        //---------- HW Specific ---------------------
     }
 }
 
@@ -99,9 +107,10 @@ static uint32_t _hw_get_dma_bytes_waiting(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
     {
-        // HW Specific
+        //---------- HW Specific ---------------------
         DMA_HandleTypeDef *p = ser->phdma;
         return p->Instance->NDTR;
+        //---------- HW Specific ---------------------
     }
     return 0;
 }
@@ -117,28 +126,54 @@ static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, ui
 {
     if (ser->type == IO_UART)
     {
-        // HW Specific
+        //---------- HW Specific ---------------------
         UART_HandleTypeDef *phuart = ser->phuart;
     
         HAL_UART_DMAStop(phuart); 
         HAL_UART_Receive_DMA(phuart, buf, size);  
-        _hw_set_idle_irq(ser);    
+        _hw_set_idle_irq(ser);
+        //---------- HW Specific ---------------------
     }
     else if (ser->type == IO_USB)
     {
         //Clear header 
-        memset(void*)buf, 0, 5);
+        memset((void*)buf, 0, 5);
     }
+}
+
+/*-----------------------------------------------------------
+/brief: Get UART IRQ status
+/param: Pointer to serial handler
+/return: IRQ status
+-----------------------------------------------------------*/
+static uint32_t _hw_get_uart_irq_status(io_serial_h *ser)
+{
+    uint32_t status = 0;
+    //---------- HW Specific ---------------------
+    UART_HandleTypeDef *p = ser->phuart;
+    uint32_t isrflags = READ_REG(p->Instance->SR);
+
+    if (READ_BIT(isrflags, USART_SR_IDLE)) status |= (1 << IDLE_CALLBACK);
+    if (READ_BIT(isrflags, USART_SR_TC))   status |= (1 << TX_CALLBACK);
+    if (READ_BIT(isrflags, USART_SR_RXNE)) status |= (1 << RX_CALLBACK);
+    //---------- HW Specific ---------------------
+
+    return status;
 }
 
 /*-----------------------------------------------------------
 /brief: Init serial
 /param: Pointer to serial handler
+/param: Type of serial HW
 /return:
 -----------------------------------------------------------*/
-void io_serial_init(io_serial_h *ser)
+void io_serial_init(io_serial_h *ser, io_serial_type_h type)
 {   
-    ser->type = IO_UART;
+    ser->type = type;
+    for (io_callback_id_t i = 0; i < LAST_CALLBACK; i++)
+    {
+        ser->callback_list[i] = NULL;
+    }
     
     _hw_init(ser);
 }
@@ -221,10 +256,7 @@ uint32_t io_serial_callback_reg(io_serial_h *ser, io_callback_id_t id, io_callba
         ser->callback_list[id] = func;
         return 1;
     }
-    else
-    {
-        return 0;
-    }    
+    return 0;
 }
 
 /*-----------------------------------------------------------
@@ -241,10 +273,7 @@ uint32_t io_serial_callback_unreg(io_serial_h *ser, io_callback_id_t id)
         ser->callback_list[id] = NULL;
         return 1;
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 /*-----------------------------------------------------------
@@ -258,15 +287,17 @@ void io_serial_callback_call(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
     {
-        UART_HandleTypeDef *p = ser->phuart;
-        uint32_t isrflags = READ_REG(p->Instance->SR);
-        
-        if (READ_BIT(isrflags, USART_SR_IDLE))//if IDLE handler call
+        uint32_t status = _hw_get_uart_irq_status(ser);
+
+        for (io_callback_id_t i = 0; i < LAST_CALLBACK; i++)
         {
-            if (ser->callback_list[IDLE_CALLBACK] != NULL)
+            if (status & (1 << i))
             {
-                ser->callback_list[IDLE_CALLBACK]((void*)ser);
+                if (ser->callback_list[i] != NULL)
+                {
+                    ser->callback_list[i]((void*)ser);
+                }
             }
-        }        
+        }
     }
 }

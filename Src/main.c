@@ -19,6 +19,7 @@
 
 //-----------------------Local variables and fucntion-------------------------
 io_serial_h _ser;
+static void _serial_idle_handler(io_serial_h *ser)
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -44,7 +45,7 @@ int main(void)
     HAL_Init();
     SystemClock_Config();
     MX_GPIO_Init();
-    io_serial_init(&_ser);
+    io_serial_init(&_ser, IO_UART);
     io_nand_init();
     //----------------------------------------------------------------------------
 
@@ -64,6 +65,9 @@ int main(void)
     //-----------------------Semaphores takes-------------------------------------
     xSemaphoreTake(xbConsoleRx, portMAX_DELAY);
     //----------------------------------------------------------------------------
+
+    //----------------------------------------------------------------------------
+    io_serial_callback_reg(&ser, IDLE_CALLBACK, (io_callback_handler_t) _serial_idle_handler);
 
     //----------------------------------------------------------------------------
     io_fs_file file;
@@ -157,3 +161,15 @@ void ConsoleMsgTask (void *pvParameters)
     }
 }
 //------------------------------------------------------------------------------------
+
+/*-----------------------------------------------------------
+/brief: IDLE IRQ callback handler
+/param: Pointer to serial handler
+/return:
+-----------------------------------------------------------*/
+static void _serial_idle_handler(io_serial_h *ser)
+{
+    UART_HandleTypeDef *p = ser->phuart;
+    p->Instance->CR1 &= (~UART_IT_IDLE);
+    xSemaphoreGiveFromISR(xbConsoleRx, NULL);
+}
