@@ -26,17 +26,7 @@ static void     _console_continue_woking(void);
 -----------------------------------------------------------*/
 static void _console_start_rx(void)
 {   
-    io_serial_type_h type = io_serial_get_type(_con.ser);
-    
-    if (type == IO_UART)
-    {
-        io_serial_set_dma_rx_and_idle_irq(_con.ser, _con.buf, _con.maxsize);
-    }
-    else
-    {
-        uint8_t dummy[5] = {0, 0, 0, 0, 0};//буфер для очистки заголовка пакета
-        memcpy((void*)_con.buf, (void*)dummy, sizeof(dummy));
-    }    
+    io_serial_set_dma_rx_and_idle_irq(_con.ser, _con.buf, _con.maxsize);   
 }
 
 /*-----------------------------------------------------------
@@ -65,7 +55,7 @@ static uint32_t _console_data_check(void)
         }
         else
         {
-            //проверяю стартовый заголовок, если битый, то пересбрасываю DMA
+            //Check header, if broken then restart RX
             if ( check_start_stop_symb(_con.buf)) return bytes_rx;  
             else
             {

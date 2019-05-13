@@ -124,6 +124,11 @@ static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, ui
         HAL_UART_Receive_DMA(phuart, buf, size);  
         _hw_set_idle_irq(ser);    
     }
+    else if (ser->type == IO_USB)
+    {
+        //Clear header 
+        memset(void*)buf, 0, 5);
+    }
 }
 
 /*-----------------------------------------------------------
@@ -202,21 +207,66 @@ void io_serial_set_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, uint32_t 
     _hw_set_usart_dma_rx_and_idle_irq(ser, buf, size);
 }
 
-//TODO:
-void io_serial_callback_reg(io_serial_h *ser, io_callback_id_t id)
+/*-----------------------------------------------------------
+/brief: Register irq callback
+/param: Pointer to serial handler
+/param: Callback ID
+/param: Callback handler
+/return: 1 if callback registered, 0 if ID >= LAST_CALLBACK
+-----------------------------------------------------------*/
+uint32_t io_serial_callback_reg(io_serial_h *ser, io_callback_id_t id, io_callback_handler_t func)
 {
+    if (id < LAST_CALLBACK)
+    {
+        ser->callback_list[id] = func;
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }    
 }
 
-//TODO:
+/*-----------------------------------------------------------
+/brief: Unregister irq callback
+/param: Pointer to serial handler
+/param: Callback ID
+/param: Callback handler
+/return: 1 if callback unregistered, 0 if ID >= LAST_CALLBACK
+-----------------------------------------------------------*/
+uint32_t io_serial_callback_unreg(io_serial_h *ser, io_callback_id_t id)
+{
+    if (id < LAST_CALLBACK)
+    {
+        ser->callback_list[id] = NULL;
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/*-----------------------------------------------------------
+/brief: Call the appropriate callback from IRQ
+/param: Pointer to serial handler
+/param: Callback ID
+/param: Callback handler
+/return: 1 if callback unregistered, 0 if ID >= LAST_CALLBACK
+-----------------------------------------------------------*/
 void io_serial_callback_call(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
     {
         UART_HandleTypeDef *p = ser->phuart;
         uint32_t isrflags = READ_REG(p->Instance->SR);
+        
         if (READ_BIT(isrflags, USART_SR_IDLE))//if IDLE handler call
         {
-            
+            if (ser->callback_list[IDLE_CALLBACK] != NULL)
+            {
+                ser->callback_list[IDLE_CALLBACK]((void*)ser);
+            }
         }        
     }
 }

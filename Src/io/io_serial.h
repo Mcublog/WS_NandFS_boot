@@ -20,14 +20,15 @@ typedef enum
     LAST_CALLBACK
 }io_callback_id_t;
 
+typedef void (*io_callback_handler_t)(void *context);
+
 typedef struct
 {
-    io_serial_type_h   type;
+    io_serial_type_h type;
+    io_callback_handler_t callback_list[LAST_CALLBACK];
     void *phuart;
     void *phdma;
 }io_serial_h;
-
-typedef void (*io_callback_handler_t)(io_serial_h *ser);
 
 void io_serial_init(io_serial_h *ser);
 void io_serial_deinit(io_serial_h *ser);
@@ -39,5 +40,11 @@ void io_serial_tx(io_serial_h *ser, uint8_t *buf, uint32_t size);
 
 uint32_t io_serial_get_dma_bytes_waiting(io_serial_h *ser);
 void io_serial_set_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, uint32_t size);
+
+uint32_t io_serial_callback_reg(io_serial_h *ser, io_callback_id_t id, io_callback_handler_t func);
+uint32_t io_serial_callback_unreg(io_serial_h *ser, io_callback_id_t id);
+void io_serial_callback_call(io_serial_h *ser);
+
+weak void io_serial_idle_handler(io_serial_h *ser);
 
 #endif // IO_SERIAL_H
