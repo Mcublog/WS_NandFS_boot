@@ -41,7 +41,8 @@ static void _hw_init(io_serial_h *ser)
 
         ser->phuart = &huart3;
         ser->phdma  = &hdma_usart3_rx;        
-    }    
+    }
+    // TODO: else if (ser->type == IO_USB);
 }
 
 /*-----------------------------------------------------------
@@ -62,7 +63,8 @@ static void _hw_deinit(io_serial_h *ser)
     
         ser->phuart = NULL;
         ser->phdma  = NULL;
-    }  
+    }
+    // TODO: else if (ser->type == IO_USB);
 }
 
 /*-----------------------------------------------------------
@@ -79,6 +81,7 @@ static void _hw_set_idle_irq(io_serial_h *ser)
         p->Instance->CR1 |= UART_IT_IDLE;
         //---------- HW Specific ---------------------
     }
+    // TODO: else if (ser->type == IO_USB);
 }
 
 /*-----------------------------------------------------------
@@ -97,6 +100,7 @@ static void _hw_tx_data(io_serial_h *ser, uint8_t *buf, uint32_t size)
         HAL_UART_Transmit(p, buf, size, 1000);
         //---------- HW Specific ---------------------
     }
+    // TODO: else if (ser->type == IO_USB);
 }
 
 /*-----------------------------------------------------------
@@ -113,6 +117,7 @@ static uint32_t _hw_get_dma_bytes_waiting(io_serial_h *ser)
         return p->Instance->NDTR;
         //---------- HW Specific ---------------------
     }
+    // TODO: else if (ser->type == IO_USB);
     return 0;
 }
 
@@ -150,6 +155,7 @@ static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, ui
 static uint32_t _hw_get_uart_irq_status(io_serial_h *ser)
 {
     uint32_t status = 0;
+    
     //---------- HW Specific ---------------------
     UART_HandleTypeDef *p = ser->phuart;
     uint32_t isrflags = READ_REG(p->Instance->SR);
@@ -173,7 +179,7 @@ void io_serial_init(io_serial_h *ser, io_serial_type_h type)
     ser->type = type;
     for (uint32_t i = 0; i < LAST_CALLBACK; i++)
     {
-        ser->callback_list[i] = NULL;
+        io_serial_callback_unreg(ser, (io_callback_id_t) i);
     }
     
     _hw_init(ser);
@@ -286,19 +292,22 @@ uint32_t io_serial_callback_unreg(io_serial_h *ser, io_callback_id_t id)
 -----------------------------------------------------------*/
 void io_serial_callback_call(io_serial_h *ser)
 {
+    uint32_t status = 0;
     if (ser->type == IO_UART)
     {
-        uint32_t status = _hw_get_uart_irq_status(ser);
+        status = _hw_get_uart_irq_status(ser);
+    }
+    // TODO: else if (ser->type == IO_USB);
 
-        for (uint32_t i = 0; i < LAST_CALLBACK; i++)
+
+    for (uint32_t i = 0; i < LAST_CALLBACK; i++)
+    {
+        if (status & (1 << i))
         {
-            if (status & (1 << i))
+            if (ser->callback_list[i] != NULL)
             {
-                if (ser->callback_list[i] != NULL)
-                {
-                    ser->callback_list[i]((void*)ser);
-                }
+                ser->callback_list[i]((void*)ser);
             }
         }
-    }
+    }    
 }
