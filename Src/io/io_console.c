@@ -8,7 +8,7 @@
 #include "console_data_parse/console_data_parse.h"
 #include "console_cmd_func/console_cmd_func.h"
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
 //uint8_t *_buf = NULL;
 io_console_handler_t    _con = {0};
 console_cmd_t           _cmd_rx = {0};

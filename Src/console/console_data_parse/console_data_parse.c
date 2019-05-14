@@ -12,15 +12,15 @@
 #define CL_SIZE_START_STOP_SYMB (2)
 #define CL_SIZE_END_SYMB (2)
 
-#define CL_START_CMD_NAME_IDX (6) //начало команды с 0 по 5 компонент с размером всего пакета
+#define CL_START_CMD_NAME_IDX (6) // Start of [CMD's Name] components
 
-#define CRC32_OFFSET_IDX (7)//смщение для  получения crc из пакета
-#define CRC32_OFFSET_COUNT (8)//размр символов не входящих в кс(вычитаю из длинны пакета)
+#define CRC32_OFFSET_IDX (7)    // Crc offset. It is to get crc from package
+#define CRC32_OFFSET_COUNT (8)  // Number of service characters (Subtract from the total package size)
 
-//[Размер в байтах всей посылки в бинарном виде][Название_команды][Тип][Кол-во параметров][P1]..[P20]
-//[Компонент команды]
+//[Total packet size][CMD's name][Type][Number of parameters][Param1]..[P20]
+//[CMD's components]
 
-//*----------------Локальные функции и переменные-----------
+//-----------------------Local variables and function-------------------------
 static uint8_t* set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b);
 static uint8_t* set_cmd_comp_bin(   comp_t* comp,
                                     uint8_t* data, uint32_t size,

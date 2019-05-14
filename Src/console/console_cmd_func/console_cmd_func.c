@@ -5,7 +5,7 @@
 
 #include "stm32f4xx_hal.h"
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf);
 static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);    
 
@@ -20,10 +20,10 @@ static const cmd_t cmd_list[] =
 //----------------------------------------------------------------------------
 
 /*-----------------------------------------------------------
-/Сформировать сообщение об ошибке crc32
-/принимает: указетель на консольную команду и
-/буфер для отправки
-/вовращает:
+/brief: Generate and send a response on CRC32_FAIL
+/param: Pointer to cmd
+/param: Pointer to TX buf
+/return:
 -----------------------------------------------------------*/
 void cmd_function_crc32_error(console_cmd_t* cl_cmd, uint8_t* buf)
 {
@@ -35,10 +35,10 @@ void cmd_function_crc32_error(console_cmd_t* cl_cmd, uint8_t* buf)
 }
 
 /*-----------------------------------------------------------
-/Сформировать сообщение о испорченном пакете
-/принимает: указетель на консольную команду и
-/буфер для отправки
-/вовращает:
+/brief: Generate and send a response on PKT_CORRUPT
+/param: Pointer to cmd
+/param: Pointer to TX buf
+/return:
 -----------------------------------------------------------*/
 void cmd_function_pkt_corrupt(console_cmd_t* cl_cmd, uint8_t* buf)
 {
@@ -50,9 +50,9 @@ void cmd_function_pkt_corrupt(console_cmd_t* cl_cmd, uint8_t* buf)
 }
 
 /*-----------------------------------------------------------
-/Выполнение команад
-/принимает: указетель на консольную команду и
-/хедер обработки консоли
+/Run CMD's handler
+/param: Pointer to cmd
+/param: Pointer to console handler
 /вовращает:
 -----------------------------------------------------------*/                       
 void cmd_fuction_caller(console_cmd_t* cl_cmd, io_console_handler_t *con_h)
@@ -69,10 +69,10 @@ void cmd_fuction_caller(console_cmd_t* cl_cmd, io_console_handler_t *con_h)
 }
 
 /*-----------------------------------------------------------
-/Сформировать сообщение о неизвестной команде
-/принимает: указетель на консольную команду и
-/буфер для отправки
-/вовращает:
+/brief: Generate and send a response on UNKNOWN_CMD
+/param: Pointer to cmd
+/param: Pointer to TX buf
+/return:
 -----------------------------------------------------------*/
 static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf)
 {
@@ -84,10 +84,10 @@ static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf)
 }
 
 /*-----------------------------------------------------------
-/Получить имя устройства, используется для нахождения на ком порте
-/принимает: указетель на консольную команду и
-/буфер для отправки
-/вовращает:
+/Get device name
+/param: Pointer to cmd
+/param: Pointer to TX buf
+/return:
 -----------------------------------------------------------*/ 
 #define DEVICE_NAME "Test_boot_v0"
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
@@ -98,4 +98,3 @@ static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
     console_form_comp(&cl_cmd->param.p[0], p0);
     console_cmd_form_complete(cl_cmd, buf);     
 }
-

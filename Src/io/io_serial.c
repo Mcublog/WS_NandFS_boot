@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "utils.h"
+
 //---------- HW Specific ---------------------
 #include "init_main.h"
 #include "stm32f4xx_hal.h"
@@ -158,11 +160,11 @@ static uint32_t _hw_get_uart_irq_status(io_serial_h *ser)
     
     //---------- HW Specific ---------------------
     UART_HandleTypeDef *p = ser->phuart;
-    uint32_t isrflags = READ_REG(p->Instance->SR);
+    uint32_t isrflags = UT_READ_REG(p->Instance->SR);
 
-    if (READ_BIT(isrflags, USART_SR_IDLE)) status |= (1 << IDLE_CALLBACK);
-    if (READ_BIT(isrflags, USART_SR_TC))   status |= (1 << TX_CALLBACK);
-    if (READ_BIT(isrflags, USART_SR_RXNE)) status |= (1 << RX_CALLBACK);
+    if (UT_READ_BIT(isrflags, USART_SR_IDLE)) status |= (1 << IDLE_CALLBACK);
+    if (UT_READ_BIT(isrflags, USART_SR_TC))   status |= (1 << TX_CALLBACK);
+    if (UT_READ_BIT(isrflags, USART_SR_RXNE)) status |= (1 << RX_CALLBACK);
     //---------- HW Specific ---------------------
 
     return status;

@@ -5,8 +5,8 @@
 
 typedef struct
 {
-    uint8_t* data;//указатель на на начало компонента
-    uint32_t size;//размер компанента
+    uint8_t* data;// Pointer to the start of CMD's components
+    uint32_t size;//CMD's components size
 }comp_t;
 
 typedef struct
@@ -16,19 +16,21 @@ typedef struct
 
 typedef struct
 {
-    uint32_t size_all;//размер всего пакета в байтах включая служебные символы    
-    comp_t   name;//имя команда
-    comp_t   type;//тип string/bin
-    comp_t   size;//кол-во параметров
-    console_param_t param;//параметры
+    uint32_t size_all;// The size of the entire package including service characters
+    comp_t   name;//СMD's name
+    comp_t   type;//Type: string/bin
+    comp_t   size;//Number of parameters
+    console_param_t param;//Parameters
 }console_cmd_t;
 
 typedef enum
 {
-	EMPTY = 0,
+    EMPTY = 0,
+//-------------------------
     Get_Name,
+//-------------------------
     ID_LAST_CMD
-}cmd_id_t;//таблица команд, индекс сответствует команде
+}cmd_id_t;//CMD's table, Index matches command
 
 typedef struct
 {
@@ -38,9 +40,9 @@ typedef struct
 }cmd_t;
 
 //коды ошибок при приеме
-#define CLI_CRC_ERROR   (0)//ошибка crc
-#define CLI_OK          (1)//все ok
-#define CLI_CORRUPT     (2)//пакет поврежден, размер не корректный
+#define CLI_CRC_ERROR   (0)
+#define CLI_OK          (1)
+#define CLI_CORRUPT     (2)// Packet corrupted
 
 uint32_t check_start_stop_symb(const uint8_t* buf);
 
