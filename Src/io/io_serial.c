@@ -10,7 +10,7 @@
 #include "stm32f4xx_hal.h"
 //---------- HW Specific ---------------------
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
 
 //---------- HW Specific ---------------------
 extern UART_HandleTypeDef   huart3;

@@ -3,7 +3,7 @@
 #include "stm32f4xx_hal.h"
 #include "init_main.h"
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
 uint32_t _nand_read_8b (NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
 uint32_t _nand_write_8b(NAND_HandleTypeDef *hnand, NAND_AddressTypeDef *pAddress, uint8_t *pBuffer, uint32_t size, uint32_t offset);
 uint32_t            _flash_adr_to_uint32(NAND_AddressTypeDef *adr);

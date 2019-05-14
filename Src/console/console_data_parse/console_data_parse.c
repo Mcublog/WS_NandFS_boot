@@ -30,33 +30,40 @@ static uint32_t get_cmd_param(  console_cmd_t* cl_cmd,
                                 uint32_t num_param, uint8_t* param);
 //*-----------------------------------------------------------
 
-/*
-//проверяет расположение скобок, обрамляющих данные
-//buf буфер с командой
-//Вовзращает 1 если все норм
-*/
+/*-----------------------------------------------------------
+/brief: Check start/stop characters of the components
+/param: Pointer to data buffer
+/return: 1 if char finded
+-----------------------------------------------------------*/
  uint32_t check_start_stop_symb(const uint8_t* buf)
  {
      if (buf[0]=='['  && buf[5]==']') return 1;
      return 0;
  }
  
+ /*-----------------------------------------------------------
+/brief: Compare two buffers. Lenght b1 == b2
+/param: Pointer to data buffer1
+/param: Pointer to data buffer2
+/param: Buffer size
+/return: 1 if buffer not equal
+-----------------------------------------------------------*/
 uint32_t buffncmp(uint8_t *b1, uint8_t *b2, uint32_t num)
 {
-    uint32_t i=0;
-    for (i = 0; i < num; i++)
+    for (uint32_t i = 0; i < num; i++)
     {
-        if (b1[i]!=b2[i])return 1;
+        if (b1[i] != b2[i]) return 1;
     }
     return 0;
 } 
 
-/*
-//Получаю из буфера crc32
-//buf буфер с командой и данными, размер пакета, по увказателю вернет crc расчитанную
-//Вовзращает 1 если crc совпала
-*/
-
+/*-----------------------------------------------------------
+/brief: Check crc from buffer
+/param: Pointer to a buf containing CMD
+/param: Data size
+/param: Pointer to crc32. This returns the calculated crc32.
+/return: 1 if buffer not equal
+-----------------------------------------------------------*/
 uint32_t console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32)
 {
     uint32_t crc_pkt = 0, crc = 0;
@@ -74,31 +81,35 @@ uint32_t console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *cr
     return 0;  
 }
 
-/*
-//получает компонент из команды, указатель на компанент
-//buf буфер с командой
-//Возвращает указатель на начаало следущего компоента команды
-*/
+/*-----------------------------------------------------------
+/brief: Get component from buffer
+/param: Pointer to component
+/param: Pointer to buff
+/return: Return pointer to next component
+-----------------------------------------------------------*/
 static uint8_t* get_cmd_comp(comp_t* comp, uint8_t* buf)
 {
-    uint8_t* s;//начальный символ
-    uint8_t* e;//конечный символ
-    uint32_t n;//кол-во символов для копирования
+    uint8_t* s;//start char
+    uint8_t* e;//end char
+    uint32_t n;//number of char to copy
     uint8_t* b = buf;
-    s = (uint8_t*)strchr((const char*) buf, CL_START_SYM); 
-    e = (uint8_t*)strchr((const char*) buf, CL_STOP_SYM); 
-    n = e-s;
-    comp->size = n-1;
-    comp->data = s+1;
-    b += (n + 1);//переход к следующему компоненту команды            
+    
+    s = (uint8_t*) strchr((const char*) buf, CL_START_SYM); 
+    e = (uint8_t*) strchr((const char*) buf, CL_STOP_SYM); 
+    n = e - s;
+    comp->size = n - 1;
+    comp->data = s + 1;
+    b += (n + 1);//Go to next component
     return b;
 }
 
-/*
-//Записывает строковый компонент
-//принимеает компанент, буфер на отравку buf буфер на отравку
-//Возвращает указтель буфера на свободное место в буфере
-*/
+/*-----------------------------------------------------------
+/brief: Set a string component to TX buf
+/param: Pointer to data string
+/param: Pointer to component
+/param: Pointer to TX buff
+/return: Return pointer to next free space
+-----------------------------------------------------------*/
 static uint8_t* set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b)
 {
     comp->size = strlen((char*) s);
@@ -112,14 +123,14 @@ static uint8_t* set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b)
     return (b++);
 }
 
-/*
-//Записывает бинарный компонент
-//получает компонент
-//буфер с данными
-//размер в байтах
-//b c формирующейся командой
-//Возвращает указтель буфера на свободное место в буфере
-*/
+/*-----------------------------------------------------------
+/brief: Set a binary component to TX buf
+/param: Pointer to component
+/param: Pointer to binary data
+/param: Data size
+/param: Pointer to TX buff
+/return: Return pointer to next free space
+-----------------------------------------------------------*/
 static uint8_t* set_cmd_comp_bin(comp_t* comp,
                                  uint8_t* data, uint32_t size,
                                  uint8_t *b)
@@ -135,27 +146,30 @@ static uint8_t* set_cmd_comp_bin(comp_t* comp,
     return (b++);
 }
 
-/*
-//получает заданноек кол-во параметров
-//buf буфер указаетлем на начало парметров командой
-//Вовзращает 1 если все ok
-*/
+/*-----------------------------------------------------------
+/brief: Get a number of components
+/param: Pointer to CMD
+/param: Number of parameters
+/param: Pointer to first param
+/return: 1 if all good
+-----------------------------------------------------------*/
 static uint32_t get_cmd_param(console_cmd_t* cl_cmd,
                               uint32_t num_param, uint8_t* param)
 {
-    uint32_t i = 0;
-    for (i = 0; i < num_param; i++)
+    for (uint32_t i = 0; i < num_param; i++)
     {      
         param = get_cmd_comp(&cl_cmd->param.p[i], param);
     }
     return 1;
 }
 
-/*
-//Устанавливает размер всей посылки
-//b буфер с командой и данными
-//Вовзращает размер всего посылки если все ok
-*/
+/*-----------------------------------------------------------
+/brief: Set the total numbers of data all package
+/param: Pointer to CMD
+/param: Pointer to buff. This returns the formatted package.
+/param: Pointer to first param
+/return: Total number of all package
+-----------------------------------------------------------*/
 uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
 {
     uint32_t crc = 0;
@@ -177,7 +191,7 @@ uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
            
     for (i = 0; i < CL_SIZE_START_STOP_SYMB + CRC32_LENGHT; i++)
     {
-       if     (i == 0)    b[size + i]= CL_START_SYM;
+       if     (i == 0)    b[size + i] = CL_START_SYM;
        else if(i == 1)
        {
            b[size + i]= 0;
@@ -193,7 +207,8 @@ uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
     b[5] = CL_STOP_SYM;    
     
     *((uint32_t*)&b[crc_idx]) = 0;
-    // crc без стоповых символов и самой crc
+    
+    // crc without stop and service char
     crc = xcrc32 (b, size - CL_SIZE_START_STOP_SYMB - CL_SIZE_END_SYMB-CRC32_LENGHT, 0xffffffff);
     *((uint32_t*)&b[crc_idx]) = crc;
 
@@ -207,15 +222,15 @@ uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
     return cmd->size_all;
 }
 
-/*
-//Парсит команду
-//buf буфер с командой
-//cl_cmd указатель на структоу консольной команды
-//Вовзращает 1 если все ok
-*/
+/*-----------------------------------------------------------
+/brief: CMD parse
+/param: Pointer to buf
+/param: Pointer to CMD
+/return: CLI_OK, CLI_CRC_ERROR, CLI_CORRUPT
+-----------------------------------------------------------*/
 uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
 {
-    uint32_t num = 0;//кол-во параметров
+    uint32_t num = 0;//number of parameters
     uint8_t *b = (uint8_t*)&buf[6];
     uint32_t size = console_cmd_get_size(buf);
     uint32_t crc = 0;
@@ -240,12 +255,11 @@ uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
     return CLI_CORRUPT;
 }
 
-/*
-//Зазватывает начало заголовка с кол-вом байтов всей посылки
-//buf буфер с командой и данными
-//Вовзращает размер всего посылки если все ok
-*/
-
+/*-----------------------------------------------------------
+/brief: Catch the start of handle whit total bytes of the all package
+/param: Pointer to buf with CMD and data
+/return: Total package size or 0 if error
+-----------------------------------------------------------*/
 uint32_t console_cmd_get_size(const uint8_t* buf)
 {
     uint32_t size = 0;
@@ -257,35 +271,33 @@ uint32_t console_cmd_get_size(const uint8_t* buf)
     return 0;
 }
 
-/*
-//Зазватывает начало заголовка с кол-вом байтов всей посылки
-//buf буфер с командой и данными
-//Вовзращает размер всего посылки если все ok
-*/
-
+/*-----------------------------------------------------------
+/brief: Set total bytes of the all package
+/param: Pointer to buf with CMD and data
+/return: Total package size or 0 if error
+-----------------------------------------------------------*/
 uint32_t console_cmd_set_size(const uint8_t* buf)
 {
     uint32_t size = 0;
     if (check_start_stop_symb(buf))
     {
-        size = (uint32_t)buf[1];
+        size = (uint32_t) buf[1];
         if (size < 8192) return size;
     }
     return 0;
 }
 
-/*
-//Парсит  имя команды
-//buf буфер с командой и данными
-//Вовзращает id команды, или ноль
-*/
-
-cmd_id_t get_cmd_id(comp_t* comp,const cmd_t* cmd_list )
+/*-----------------------------------------------------------
+/brief: Parse CMD's ID
+/param: Pointer to a compontent
+/param: Pointer to a CMD's list
+/return: CMD's ID or EMPTY (0)
+-----------------------------------------------------------*/
+cmd_id_t get_cmd_id(comp_t* comp, const cmd_t* cmd_list )
 {
-    uint32_t i=0;  
-    for (i = 0; i < ID_LAST_CMD; i++)
+    for (uint32_t i = 0; i < ID_LAST_CMD; i++)
     {
-        if (buffncmp(comp->data,(uint8_t*)cmd_list[i].s, comp->size) == 0)
+        if (buffncmp(comp->data, (uint8_t*)cmd_list[i].s, comp->size) == 0)
         {
             return cmd_list[i].id;
         }
@@ -293,52 +305,55 @@ cmd_id_t get_cmd_id(comp_t* comp,const cmd_t* cmd_list )
     return EMPTY;
 }
 
-/*
-//Формирует компонент
-// указатель на компонент comp_t*
-//данные строка/массив
-//Строки не должны быть из массива
-//Вовращает:
-*/
+/*-----------------------------------------------------------
+/brief: Formatting the component
+/param: Pointer to a compontent
+/param: Pointer to a data buf
+/return:
+-----------------------------------------------------------*/
 void console_form_comp(comp_t* comp, const uint8_t *data)
 {
     comp->data = (uint8_t*)data;
     comp->size = sizeof(data);
 }
 
-/*
-//Формирует заголовок (name, type, size)
-//указатели на СТРОКИ имя, тип, кол-во параметров
-//указатель на команду консоли
-//Вовращает:
-*/
+/*-----------------------------------------------------------
+/brief: Formatting the header ([NAME][TYPE][SIZE])
+/param: Pointer to string with NAME
+/param: Pointer to string with TYPE
+/param: Pointer to string with SIZE (Number of parameters)
+/return:
+-----------------------------------------------------------*/
 void console_form_head(const char* name, const char* type, const char* size , console_cmd_t* cl_cmd)
 {
-    console_form_comp(&cl_cmd->name,(uint8_t*)name);
-    console_form_comp(&cl_cmd->type,(uint8_t*)type);
-    console_form_comp(&cl_cmd->size,(uint8_t*)size);
+    console_form_comp(&cl_cmd->name, (uint8_t*)name);
+    console_form_comp(&cl_cmd->type, (uint8_t*)type);
+    console_form_comp(&cl_cmd->size, (uint8_t*)size);
 }
 
-/*
-//Формирует компонент
-// указатель на компонент comp_t*
-//данные строка/массив
-//размер в байтах
-//Вовращает:
-*/
+/*-----------------------------------------------------------
+/brief: Formatting the component
+/param: Pointer to a component
+/param: Pointer to a component data
+/param: Data size
+/return:
+-----------------------------------------------------------*/
 void console_form_comp_bin(comp_t* comp, const uint8_t *data, const uint32_t size)
 {
     comp->data = (uint8_t*)data;
     comp->size = size;
 }
 
-/*
-//Формирует команду на отправку
-//cl_cmd указатель на структоу консольной команды
-//названия компаненет
-//массив параметров
-//Вовращает: общую длинну
-*/
+/*-----------------------------------------------------------
+/brief: Formatting a CMD to TX
+/param: Pointer to a CMD
+/param: Pointer to string with NAME
+/param: Pointer to string with TYPE
+/param: Pointer to string with SIZE (Number of parameters)
+/param: Pointer to param
+/param: Pointer to TX buf
+/return: Total size or 0 if error
+-----------------------------------------------------------*/
 uint32_t console_cmd_form(console_cmd_t* cmd,
                           uint8_t *name, uint8_t *type, uint8_t *size,
                           comp_t *param,
@@ -376,12 +391,12 @@ uint32_t console_cmd_form(console_cmd_t* cmd,
     return 0;
 }
 
-/*
-//Формирует команду на отправку (параметры команды уже фсформированы)
-//cl_cmd указатель на структоу консольной команды
-//указательн буфер отправки
-//Вовращает: общую длинну
-*/
+/*-----------------------------------------------------------
+/brief: Formatting a CMD to TX (CMD's parameters allready formatting)
+/param: Pointer to a CMD
+/param: Pointer to TX buf
+/return: Total size or 0 if error
+-----------------------------------------------------------*/
 uint32_t console_cmd_form_complete(console_cmd_t* cmd, uint8_t *b)
 {
     return console_cmd_form(cmd,

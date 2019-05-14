@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "io_nand.h"
 
-//-----------------------Local variables and fucntion-------------------------
+//-----------------------Local variables and function-------------------------
 int _fs_flash_read(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size);
 int _fs_flash_prog(const struct lfs_config *cfg, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size);
 int _fs_flash_erase(const struct lfs_config *cfg, lfs_block_t block);

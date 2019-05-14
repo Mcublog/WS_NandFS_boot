@@ -17,7 +17,7 @@ typedef struct
 typedef struct
 {
     uint32_t size_all;// The size of the entire package including service characters
-    comp_t   name;//СMD's name
+    comp_t   name;//CMD's name
     comp_t   type;//Type: string/bin
     comp_t   size;//Number of parameters
     console_param_t param;//Parameters
@@ -39,7 +39,7 @@ typedef struct
     void (*func_cmd)(console_cmd_t* cl_cmd, uint8_t *buf);
 }cmd_t;
 
-//коды ошибок при приеме
+//ERROR codes
 #define CLI_CRC_ERROR   (0)
 #define CLI_OK          (1)
 #define CLI_CORRUPT     (2)// Packet corrupted
