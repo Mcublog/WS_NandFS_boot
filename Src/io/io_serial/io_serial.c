@@ -27,7 +27,7 @@ static void     _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf
 static uint32_t _hw_get_uart_irq_status(io_serial_h *ser);
 //----------------------------------------------------------------------------
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: Init HW
 /param: Pointer to serial handler
 /return:
@@ -36,10 +36,8 @@ static void _hw_init(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
     {
-        //---------- HW Specific ---------------------
         MX_DMA_Init();
         MX_USART3_UART_Init();
-        //---------- HW Specific ---------------------
 
         ser->phuart = &huart3;
         ser->phdma  = &hdma_usart3_rx;        
@@ -47,7 +45,7 @@ static void _hw_init(io_serial_h *ser)
     // TODO: else if (ser->type == IO_USB);
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: DeInit HW
 /param: Pointer to serial handler
 /return:
@@ -58,10 +56,8 @@ static void _hw_deinit(io_serial_h *ser)
     {        
         ser->type = IO_NONE;
         
-        //---------- HW Specific ---------------------
         MX_DMA_Deinit();
         MX_USART3_UART_Deinit();
-        //---------- HW Specific ---------------------
     
         ser->phuart = NULL;
         ser->phdma  = NULL;
@@ -69,7 +65,7 @@ static void _hw_deinit(io_serial_h *ser)
     // TODO: else if (ser->type == IO_USB);
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: Set IDLE Irq
 /param: Pointer to serial handler
 /return:
@@ -86,7 +82,7 @@ static void _hw_set_idle_irq(io_serial_h *ser)
     // TODO: else if (ser->type == IO_USB);
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: Serial TX
 /param: Pointer to serial handler
 /param: Pointer to TX bufer
@@ -105,7 +101,7 @@ static void _hw_tx_data(io_serial_h *ser, uint8_t *buf, uint32_t size)
     // TODO: else if (ser->type == IO_USB);
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: Get the number of bytes from DMA
 /param: Pointer to serial handler
 /return:
@@ -116,14 +112,14 @@ static uint32_t _hw_get_dma_bytes_waiting(io_serial_h *ser)
     {
         //---------- HW Specific ---------------------
         DMA_HandleTypeDef *p = ser->phdma;
-        return p->Instance->NDTR;
+        if (p != NULL) return p->Instance->NDTR;
         //---------- HW Specific ---------------------
     }
     // TODO: else if (ser->type == IO_USB);
     return 0;
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: Set DMA rx and IDLE IRQ
 /param: Pointer to serial handler
 /param: Pointer to RX bufer
@@ -149,7 +145,7 @@ static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, ui
     }
 }
 
-/*-----------------------------------------------------------
+/*------------------ HW Specific --------------------------
 /brief: Get UART IRQ status
 /param: Pointer to serial handler
 /return: IRQ status

@@ -6,9 +6,9 @@
 #include "init_main.h"
 #include "test.h"
 
-#include "io_nand.h"
-#include "io_fs.h"
-#include "io_serial.h"
+#include "io/io_nand/io_nand.h"
+#include "io/io_serial/io_serial.h"
+#include "io/io_fs.h"
 #include "io_console.h"
 
 //-----------------------Types and definition---------------------------------
