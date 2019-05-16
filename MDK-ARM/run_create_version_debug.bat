@@ -1,0 +1,1 @@
+python "%~dp0create_fw_ver.py" -p d -g
