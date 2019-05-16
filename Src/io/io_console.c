@@ -131,12 +131,12 @@ void io_console_process(void)
             printf("Data rx -- Corrupted\r\n");
             cmd_function_pkt_corrupt(&_cmd_rx, _con.buf);
         }
+        io_serial_tx(_con.ser, _con.buf, _cmd_rx.size_all);
     }
     else
     {
         _console_continue_woking();
     }
-    
-    io_serial_tx(_con.ser, _con.buf, _cmd_rx.size_all);
+
     _console_start_rx();
 }

@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;  ../Drivers/STM32F4xx_HAL_Driver/Inc;  ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;  ../Middlewares/Third_Party/FreeRTOS/Source/include;  ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;  ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;  ../Drivers/CMSIS/Include;  ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;  ..\Src\init_main;  ..\Src\littlefs;  ..\Src\io;  ..\Src\rtt;  ..\Src\console</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;..\Src\init_main;..\Src\littlefs;..\Src\io;..\Src\rtt;..\Src\console;..\Src\io\io_serial;..\Src\io\io_nand;..\Src\utils</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -600,19 +600,19 @@
               <FilePath>..\Src\io\io_fs.c</FilePath>
             </File>
             <File>
-              <FileName>io_nand.c</FileName>
+              <FileName>io_console.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\io\io_nand.c</FilePath>
+              <FilePath>..\Src\io\io_console.c</FilePath>
             </File>
             <File>
               <FileName>io_serial.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\io\io_serial.c</FilePath>
+              <FilePath>..\Src\io\io_serial\io_serial.c</FilePath>
             </File>
             <File>
-              <FileName>io_console.c</FileName>
+              <FileName>io_nand.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\io\io_console.c</FilePath>
+              <FilePath>..\Src\io\io_nand\io_nand.c</FilePath>
             </File>
           </Files>
         </Group>
