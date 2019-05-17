@@ -1,4 +1,6 @@
 import sys, os, shutil, getopt
+import subprocess
+import re
 
 
 def usage():
@@ -7,6 +9,21 @@ def usage():
     -p          Added parameter, some like d for Debug (Optional)
     -g          Get last commit from Git
     """ % sys.argv[0])
+    
+def version_parse(data):
+    # template #.#.#.#, # -- number
+    exp = r'\d+[.]+\d+[.]+\d+[.]+\d+'
+    version = re.findall(exp, data)
+
+    if (len(version) == 0):
+        # template #.#.#, # -- number
+        exp = r'\d+[.]+\d+[.]+\d+'
+        version = re.findall(exp, data)
+    if (len(version) == 0):
+        print('Error: Version not found')
+        raise SystemExit(2)
+        
+    return version[0]
     
 def create_fw_ver_h(last_msg):
     # Create fw_ver.h
@@ -23,7 +40,6 @@ def create_fw_ver_h(last_msg):
         out_path = os.getcwd() + '\\Src\\init_main\\'
         if ('MDK-ARM' in out_path):
             out_path = os.getcwd()[:-len('MDK-ARM')] + '\\Src\\init_main\\'
-        #raise SystemExit(0)
         
     print('Info: Create: ' + fw_ver_file_name + ' in --> ' + out_path)
     try:
@@ -42,50 +58,29 @@ def create_fw_ver_h(last_msg):
     print('Info: fw_v' + last_msg)
     
 def set_fw_ver_mercurial(param = ''):
-    # Find last commit msg
-    path = os.getcwd() + '\\.hg'
-    if ('MDK-ARM' in path):
-        path = os.getcwd()[:-len('MDK-ARM')] + '\\.hg'
-    print('Info: Go to --> ' + path)    
-    last_msg = ''
-    for file_name in os.listdir(path):  # for each file in dir
-        if 'last-message.txt' in file_name:
-            f = open(path + '\\' + file_name, 'r')
-            last_msg = f.readline()
-            f.close()
-            break
+    process = subprocess.Popen(["hg", "log", "--limit", " 1"], stdout=subprocess.PIPE)
+    output = str(process.communicate()[0])
 
-    # If not found last commit msg
-    if not last_msg:
-        print('Error: last-message.txt in ' + path + '[NOT FIND]')
-        raise SystemExit(0)
+    # output = '0.0.1021 -- added create_fw_ver.py\n'
+    # print(output)
+
+    last_msg = version_parse(output)
+    if (last_msg == ''):
+        print('Error: Version not found')
+        raise SystemExit(2)
     
-    print('Info: Find last message: ' + last_msg)
-    last_msg = last_msg[:last_msg.find(' ')]
     print('Info: Commit number: ' + last_msg)
     create_fw_ver_h(last_msg + param)
     
 def set_fw_ver_git(param = ''):
-    # Find last commit msg
-    path = os.getcwd() + '\\.git'
-    if ('MDK-ARM' in path):
-        path = os.getcwd()[:-len('MDK-ARM')] + '\\.git'
-    print('Info: Go to --> ' + path)
-    last_msg = ''
-    for file_name in os.listdir(path):  # for each file in dir
-        if 'COMMIT_EDITMSG' in file_name:
-            f = open(path + '\\' + file_name, 'r')
-            last_msg = f.readline()
-            f.close()
-            break
+    process = subprocess.Popen(["git", "log", "-1"], stdout=subprocess.PIPE)
+    output = str(process.communicate()[0])
 
-    # If not found last commit msg
-    if not last_msg:
-        print('Error: COMMIT_EDITMSG in ' + path + '[NOT FIND]')
-        raise SystemExit(0)
+    # output = '0.0.1021 -- added create_fw_ver.py\n'
+    # print(output)
+
+    last_msg = version_parse(output)
     
-    print('Info: Find last message: ' + last_msg)
-    last_msg = last_msg[:last_msg.find(' ')]
     print('Info: Commit number: ' + last_msg)
     create_fw_ver_h(last_msg + param)    
     
@@ -118,3 +113,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
