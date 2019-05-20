@@ -28,6 +28,7 @@ typedef enum
     EMPTY = 0,
 //-------------------------
     Get_Name,
+    Jmp_App,
 //-------------------------
     ID_LAST_CMD
 }cmd_id_t;//CMD's table, Index matches command

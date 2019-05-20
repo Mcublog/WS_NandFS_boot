@@ -1,25 +1,40 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include <stdio.h>
-
+#include <string.h>
 
 #include "init_main.h"
-#include "test.h"
+//#include "test.h"
 
 #include "io/io_nand/io_nand.h"
 #include "io/io_serial/io_serial.h"
 #include "io/io_fs.h"
 #include "io_console.h"
 
+#include "firmware.h"
+
 //-----------------------Types and definition---------------------------------
 // NOTE: Redefine in stm32f4xx_hal_nand.h for Waveshare board
 #define CMD_AREA                   ((uint32_t)(1U<<17U))  /* A16 = CLE high */
 #define ADDR_AREA                  ((uint32_t)(1U<<16U))  /* A17 = ALE high */
+
+#define MMNGR_BACKUPRAM_OFFSET  (0x0008)
+#define BKP_BASE                (0x4000284C)
+
+#define MAIN_PROGRAM_START_ADDRESS  FIRMWARE_ADDR
 //----------------------------------------------------------------------------
 
 //-----------------------Local variables and function-------------------------
 io_serial_h _ser;
 static void _serial_idle_handler(io_serial_h *ser);
+
+void copy_and_jmp_to_app(void);
+
+void set_boot_mark(void);
+static void check_boot_mark(void);
+
+
+static void _config_write_word32(uint32_t full_adr, uint32_t word);
 //----------------------------------------------------------------------------
 
 //-----------------------Project options--------------------------------------
@@ -43,6 +58,9 @@ int main(void)
 {
     //-----------------------HW init----------------------------------------------
     HAL_Init();
+    
+    check_boot_mark();
+    
     SystemClock_Config();
     MX_GPIO_Init();
     io_serial_init(&_ser, IO_UART);
@@ -100,13 +118,82 @@ int main(void)
     // print the boot count
     printf("boot_count: %d\n", boot_count);
     //----------------------------------------------------------------------------
-    
+        
     osKernelStart();
     while (1)
     {
     }
 }
 //------------------------------------------------------------------------------------
+
+/*-----------------------------------------------------------
+/brief: Copy the app to the inner flash and boot
+/param:
+/return:
+-----------------------------------------------------------*/
+void copy_and_jmp_to_app(void)
+{
+    printf("firm_array size in WORD: %d\r\n", sizeof(firm_array));
+    
+    HAL_FLASH_Unlock();
+    FLASH_Erase_Sector(FLASH_SECTOR_5, FLASH_VOLTAGE_RANGE_3);   
+    HAL_FLASH_Lock(); 
+    uint32_t *pword = (uint32_t*) firm_array;
+    for (uint32_t i = 0; i < (sizeof(firm_array)>>2); i++)
+    {
+        _config_write_word32((MAIN_PROGRAM_START_ADDRESS + i * 4), pword[i]);
+    }
+    set_boot_mark();
+}
+
+/*-----------------------------------------------------------
+/brief: Set mark to boot new app and RESET
+/param:
+/return:
+-----------------------------------------------------------*/
+void set_boot_mark(void)
+{   
+    uint32_t *prst = (uint32_t*)(BKP_BASE + MMNGR_BACKUPRAM_OFFSET);
+    
+    HAL_PWR_EnableBkUpAccess();
+    *prst = 0xFFFFFFFF;
+    HAL_PWR_DisableBkUpAccess();
+    //RST
+    HAL_NVIC_SystemReset();
+}
+
+/*-----------------------------------------------------------
+/brief: Check boot mark, reset it, and boot new app
+/param:
+/return:
+-----------------------------------------------------------*/
+static void check_boot_mark(void)
+{
+    volatile uint32_t *prst = (uint32_t*)(BKP_BASE + MMNGR_BACKUPRAM_OFFSET);
+    
+    if (*prst == 0xFFFFFFFF)
+    {
+        typedef  void (*pFunction)(void);
+    
+        uint32_t jumpAddress = *((__IO uint32_t*) (MAIN_PROGRAM_START_ADDRESS + 4));     
+        pFunction Jump_To_Application = (pFunction) jumpAddress;        
+        
+        
+        HAL_PWR_EnableBkUpAccess();
+        *prst = 0;
+        HAL_PWR_DisableBkUpAccess();
+        
+        HAL_RCC_DeInit();  
+        HAL_DeInit();
+        
+        __disable_irq();
+        SCB->VTOR = MAIN_PROGRAM_START_ADDRESS;
+        __enable_irq();    
+    
+        __set_MSP(*(__IO uint32_t*) MAIN_PROGRAM_START_ADDRESS); 
+        Jump_To_Application();         
+    }    
+}
 
 //------------------------- StartDefaultTask ---------------------------------
 void StartDefaultTask (void *pvParameters)
@@ -150,6 +237,8 @@ void ConsoleMsgTask (void *pvParameters)
 {
     printf("ConsoleMsgkTask...Start\r\n");
     io_console_init(&_ser, buf, BUFFSIZE);
+
+    HAL_GPIO_TogglePin(Debug_GPIO_Port, Debug_Pin);
     
     while (1)
     {
@@ -169,4 +258,30 @@ static void _serial_idle_handler(io_serial_h *ser)
     UART_HandleTypeDef *p = ser->phuart;
     p->Instance->CR1 &= (~UART_IT_IDLE);
     xSemaphoreGiveFromISR(xbConsoleRx, NULL);
+}
+
+/*-----------------------------------------------------------
+/brief: Write U32 word to FLASH
+/param: Flash addr
+/param: Data word
+/return:
+-----------------------------------------------------------*/
+static void _config_write_word32(uint32_t full_adr, uint32_t word)
+{
+    HAL_StatusTypeDef s=HAL_ERROR;
+    HAL_FLASH_Unlock();
+
+    while (s==HAL_ERROR)
+    {
+        __HAL_FLASH_DATA_CACHE_DISABLE();
+        __HAL_FLASH_INSTRUCTION_CACHE_DISABLE();
+
+        __HAL_FLASH_DATA_CACHE_RESET();
+        __HAL_FLASH_INSTRUCTION_CACHE_RESET();
+
+        __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
+        __HAL_FLASH_DATA_CACHE_ENABLE();          
+        s = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, full_adr, word);    
+    }
+    HAL_FLASH_Lock();
 }
