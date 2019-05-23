@@ -8,6 +8,7 @@
 //-----------------------Local variables and function-------------------------
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf);
 static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf);
+static void _write_app(console_cmd_t* cl_cmd, uint8_t *buf);
     
 static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);    
 
@@ -17,6 +18,7 @@ static const cmd_t cmd_list[] =
 //------------------------------------------------------------------------------
                         {Get_Name,         "GET_NAME",          &_get_name},
                         {Jmp_App,          "JMP_APP",           &_jmp_app},
+                        {Write_App,        "WRITE_APP",         &_write_app},
 //------------------------------------------------------------------------------
                         {ID_LAST_CMD,      "LAST_CMD",          NULL}
 };
@@ -116,4 +118,17 @@ static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf)
     console_cmd_form_complete(cl_cmd, buf);
     
     set_boot_mark();
+}
+
+/*-----------------------------------------------------------
+/Get device name
+/param: Pointer to cmd
+/param: Pointer to TX buf
+/return:
+-----------------------------------------------------------*/ 
+static void _write_app(console_cmd_t* cl_cmd, uint8_t *buf)
+{
+    console_form_head("WRITE_APP", "string", "1" , cl_cmd);
+    console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"OK");
+    console_cmd_form_complete(cl_cmd, buf);    
 }
