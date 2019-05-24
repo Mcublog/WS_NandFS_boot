@@ -1,4 +1,4 @@
-#include "console_data_parse.h"
+#include "proto_data_parse.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -32,7 +32,7 @@ typedef enum
 //-----------------------Local variables and function-------------------------
 static uint32_t _buffncmp(const uint8_t *b1, const uint8_t *b2, uint32_t num);
 static uint8_t *_findchr(const uint8_t *pbuf, uint8_t c);
-static uint32_t _console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32);
+static uint32_t _proto_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32);
 static uint8_t* _set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b);
 
 static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
@@ -40,7 +40,7 @@ static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
                                     uint32_t size,
                                     uint8_t *b);
 
-static uint32_t _get_string_params( console_cmd_t* cl_cmd,
+static uint32_t _get_string_params( proto_cmd_t* cl_cmd,
                                     uint32_t num_param,
                                     uint8_t* param);
 
@@ -103,7 +103,7 @@ static uint8_t *_findchr(const uint8_t *pbuf, uint8_t c)
 /param: Pointer to crc32. This returns the calculated crc32.
 /return: 1 if buffer not equal
 -----------------------------------------------------------*/
-static uint32_t _console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32)
+static uint32_t _proto_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32)
 {
     uint32_t crc_pkt = 0, crc = 0;
     uint32_t i = 0;
@@ -229,7 +229,7 @@ static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
 /param: Pointer to first param
 /return: 1 if all good
 -----------------------------------------------------------*/
-static uint32_t _get_string_params(  console_cmd_t* cl_cmd,
+static uint32_t _get_string_params(  proto_cmd_t* cl_cmd,
                                      uint32_t num_param,
                                      uint8_t* param)
 {
@@ -247,7 +247,7 @@ static uint32_t _get_string_params(  console_cmd_t* cl_cmd,
 /param: Pointer to first param
 /return: Total number of all package
 -----------------------------------------------------------*/
-uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
+uint32_t proto_cmd_set_size_and_end(proto_cmd_t* cmd, uint8_t *b)
 {
     uint32_t crc = 0;
     uint32_t crc_idx = 0;
@@ -305,16 +305,16 @@ uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
 /param: Pointer to CMD
 /return: CLI_OK, CLI_CRC_ERROR, CLI_CORRUPT
 -----------------------------------------------------------*/
-uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
+uint32_t proto_cmd_parse(const uint8_t* buf, proto_cmd_t* cl_cmd)
 {
     uint32_t num = 0;//number of parameters
     uint8_t *b = (uint8_t*)&buf[6];
-    uint32_t size = console_cmd_get_size(buf);
+    uint32_t size = proto_cmd_get_size(buf);
     uint32_t crc = 0;
 
     if (size != 0)
     {
-        if (_console_cmd_check_crc32(buf, size, &crc))
+        if (_proto_cmd_check_crc32(buf, size, &crc))
         {
             cl_cmd->size_all = size;
             b = _get_string_comp(&cl_cmd->name, b);
@@ -340,7 +340,7 @@ uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
 /param: Pointer to buf with CMD and data
 /return: Total package size or 0 if error
 -----------------------------------------------------------*/
-uint32_t console_cmd_get_size(const uint8_t* buf)
+uint32_t proto_cmd_get_size(const uint8_t* buf)
 {
     uint32_t size = 0;
     if (check_start_stop_symb(buf))
@@ -375,7 +375,7 @@ cmd_id_t get_cmd_id(comp_t* comp, const cmd_t* cmd_list )
 /param: Pointer to a data buf
 /return:
 -----------------------------------------------------------*/
-void console_form_comp(comp_t* comp, const uint8_t *data)
+void proto_form_comp(comp_t* comp, const uint8_t *data)
 {
     comp->data = (uint8_t*)data;
     comp->size = sizeof(data);
@@ -388,11 +388,11 @@ void console_form_comp(comp_t* comp, const uint8_t *data)
 /param: Pointer to string with SIZE (Number of parameters)
 /return:
 -----------------------------------------------------------*/
-void console_form_head(const char* name, const char* type, const char* size , console_cmd_t* cl_cmd)
+void proto_form_head(const char* name, const char* type, const char* size , proto_cmd_t* cl_cmd)
 {
-    console_form_comp(&cl_cmd->name, (uint8_t*)name);
-    console_form_comp(&cl_cmd->type, (uint8_t*)type);
-    console_form_comp(&cl_cmd->size, (uint8_t*)size);
+    proto_form_comp(&cl_cmd->name, (uint8_t*)name);
+    proto_form_comp(&cl_cmd->type, (uint8_t*)type);
+    proto_form_comp(&cl_cmd->size, (uint8_t*)size);
 }
 
 /*-----------------------------------------------------------
@@ -402,7 +402,7 @@ void console_form_head(const char* name, const char* type, const char* size , co
 /param: Data size
 /return:
 -----------------------------------------------------------*/
-void console_form_comp_bin(comp_t* comp, const uint8_t *data, const uint32_t size)
+void proto_form_comp_bin(comp_t* comp, const uint8_t *data, const uint32_t size)
 {
     comp->data = (uint8_t*)data;
     comp->size = size;
@@ -418,7 +418,7 @@ void console_form_comp_bin(comp_t* comp, const uint8_t *data, const uint32_t siz
 /param: Pointer to TX buf
 /return: Total size or 0 if error
 -----------------------------------------------------------*/
-uint32_t console_cmd_form(console_cmd_t* cmd,
+uint32_t proto_cmd_form(proto_cmd_t* cmd,
                           uint8_t *name, uint8_t *type, uint8_t *size,
                           comp_t *param,
                           uint8_t *b)
@@ -450,7 +450,7 @@ uint32_t console_cmd_form(console_cmd_t* cmd,
     }
 
     p = &b[0];
-    console_cmd_set_size_and_end(cmd, p);
+    proto_cmd_set_size_and_end(cmd, p);
 
     return 0;
 }
@@ -461,9 +461,9 @@ uint32_t console_cmd_form(console_cmd_t* cmd,
 /param: Pointer to TX buf
 /return: Total size or 0 if error
 -----------------------------------------------------------*/
-uint32_t console_cmd_form_complete(console_cmd_t* cmd, uint8_t *b)
+uint32_t proto_cmd_form_complete(proto_cmd_t* cmd, uint8_t *b)
 {
-    return console_cmd_form(cmd,
+    return proto_cmd_form(cmd,
                             cmd->name.data, cmd->type.data, cmd->size.data,
                             &cmd->param.p[0], b);
 }

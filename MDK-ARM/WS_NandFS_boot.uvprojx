@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;..\Src\init_main;..\Src\littlefs;..\Src\io;..\Src\rtt;..\Src\console;..\Src\io\io_serial;..\Src\io\io_nand;..\Src\utils</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;..\Src\init_main;..\Src\littlefs;..\Src\io;..\Src\rtt;..\Src\proto;..\Src\io\io_serial;..\Src\io\io_nand;..\Src\utils</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -600,11 +600,6 @@
               <FilePath>..\Src\io\io_fs.c</FilePath>
             </File>
             <File>
-              <FileName>io_console.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\io\io_console.c</FilePath>
-            </File>
-            <File>
               <FileName>io_serial.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Src\io\io_serial\io_serial.c</FilePath>
@@ -613,6 +608,11 @@
               <FileName>io_nand.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Src\io\io_nand\io_nand.c</FilePath>
+            </File>
+            <File>
+              <FileName>io_proto.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\io\io_proto.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -647,22 +647,22 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>console</GroupName>
+          <GroupName>proto</GroupName>
           <Files>
-            <File>
-              <FileName>console_cmd_func.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\console\console_cmd_func\console_cmd_func.c</FilePath>
-            </File>
-            <File>
-              <FileName>console_data_parse.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\console\console_data_parse\console_data_parse.c</FilePath>
-            </File>
             <File>
               <FileName>crc32.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\console\crc32\crc32.c</FilePath>
+              <FilePath>..\Src\proto\crc32\crc32.c</FilePath>
+            </File>
+            <File>
+              <FileName>proto_cmd_func.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\proto\proto_cmd_func\proto_cmd_func.c</FilePath>
+            </File>
+            <File>
+              <FileName>proto_data_parse.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\proto\proto_data_parse\proto_data_parse.c</FilePath>
             </File>
           </Files>
         </Group>

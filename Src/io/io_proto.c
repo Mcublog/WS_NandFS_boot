@@ -1,46 +1,46 @@
-#include "io_console.h"
+#include "io_proto.h"
 
 #include "init_main.h"
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "console_data_parse/console_data_parse.h"
-#include "console_cmd_func/console_cmd_func.h"
+#include "proto_data_parse/proto_data_parse.h"
+#include "proto_cmd_func/proto_cmd_func.h"
 
 //-----------------------Local variables and function-------------------------
 typedef enum
 {
-    CON_COMPLETE,
-    CON_WAIT_BYTES
-}console_rx_state_t;
+    PROTO_COMPLETE,
+    PROTO_WAIT_BYTES
+}proto_rx_state_t;
 
 //uint8_t *_buf = NULL;
-io_console_handler_t    _con = {0};
-console_cmd_t           _cmd_rx = {0};
+io_proto_handler_t    _con = {0};
+proto_cmd_t           _cmd_rx = {0};
 
-static void     _console_start_rx(void);
-static uint32_t _console_data_check(console_rx_state_t *state);
-static uint32_t _console_try_parse(void);
-static void     _console_continue_woking(void);
+static void     _proto_start_rx(void);
+static uint32_t _proto_data_check(proto_rx_state_t *state);
+static uint32_t _proto_try_parse(void);
+static void     _proto_continue_woking(void);
 //----------------------------------------------------------------------------
 
 /*-----------------------------------------------------------
-/brief: Launch console to receive data
+/brief: Launch proto to receive data
 /param:
 /return:
 -----------------------------------------------------------*/
-static void _console_start_rx(void)
+static void _proto_start_rx(void)
 {   
     io_serial_set_dma_rx_and_idle_irq(_con.ser, _con.buf, _con.maxsize);   
 }
 
 /*-----------------------------------------------------------
-/brief: Check console status
+/brief: Check proto status
 /param:
 /return: 0 if error, number data bytes
 -----------------------------------------------------------*/
-static uint32_t _console_data_check(console_rx_state_t *state)
+static uint32_t _proto_data_check(proto_rx_state_t *state)
 {
     uint32_t bytes_rx = 0, i = 0;
     io_serial_type_h type = io_serial_get_type(_con.ser);
@@ -53,27 +53,27 @@ static uint32_t _console_data_check(console_rx_state_t *state)
   
     if (i >= 5)
     {
-        bytes_rx = console_cmd_get_size(_con.buf);
+        bytes_rx = proto_cmd_get_size(_con.buf);
         if (i != bytes_rx)
         {
-            *state = CON_WAIT_BYTES;
+            *state = PROTO_WAIT_BYTES;
             return 0;
         }
         else
         {
-            *state = CON_COMPLETE;
+            *state = PROTO_COMPLETE;
             //Check header, if broken then restart RX
             if ( check_start_stop_symb(_con.buf)) return bytes_rx;  
             else
             {
-                _console_start_rx();
+                _proto_start_rx();
                 return 0;
             }
         }
     }
     else
     {
-        *state = CON_WAIT_BYTES;
+        *state = PROTO_WAIT_BYTES;
         return 0;
     }
 }
@@ -83,35 +83,35 @@ static uint32_t _console_data_check(console_rx_state_t *state)
 /param:
 /return: 0 == CLI_CRC_ERROR, 1 == CLI_OK, 2 == CLI_CORRUPT
 -----------------------------------------------------------*/
-static uint32_t _console_try_parse(void)
+static uint32_t _proto_try_parse(void)
 {
-    return console_cmd_parse(_con.buf, &_cmd_rx);
+    return proto_cmd_parse(_con.buf, &_cmd_rx);
 }
 
 /*-----------------------------------------------------------
-/brief: Continue to work the console
+/brief: Continue to work the proto
 /param:
 /return:
 -----------------------------------------------------------*/
-static void _console_continue_woking(void)
+static void _proto_continue_woking(void)
 {
     io_serial_set_idle_irq(_con.ser);
 }
 
 /*-----------------------------------------------------------
-/brief: Init serial console
+/brief: Init serial proto
 /param: Pointer to serial handler
-/param: Pointer to console data buffer
+/param: Pointer to proto data buffer
 /param: Maximum buffer size
 /return:
 -----------------------------------------------------------*/
-void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
+void io_proto_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
 {   
     _con.ser       = ser;
     _con.buf       = pbuf;
     _con.maxsize   = size;
     
-    _console_start_rx();
+    _proto_start_rx();
 }
 
 /*-----------------------------------------------------------
@@ -119,14 +119,14 @@ void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
 /param:
 /return:
 -----------------------------------------------------------*/
-void io_console_process(void)
+void io_proto_process(void)
 {
-    console_rx_state_t  state = CON_COMPLETE;
-    uint32_t data_count = _console_data_check(&state);
+    proto_rx_state_t  state = PROTO_COMPLETE;
+    uint32_t data_count = _proto_data_check(&state);
     
     if (data_count)
     {
-        uint32_t status = _console_try_parse();
+        uint32_t status = _proto_try_parse();
         
         if  (status == CLI_OK)
         {
@@ -147,8 +147,8 @@ void io_console_process(void)
     }
     else
     {
-        _console_continue_woking();
+        _proto_continue_woking();
     }
 
-    if (state == CON_COMPLETE) _console_start_rx(); //Reset pointers to start index of the buf_rx;
+    if (state == PROTO_COMPLETE) _proto_start_rx(); //Reset pointers to start index of the buf_rx;
 }

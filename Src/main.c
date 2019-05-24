@@ -9,7 +9,7 @@
 #include "io/io_nand/io_nand.h"
 #include "io/io_serial/io_serial.h"
 #include "io/io_fs.h"
-#include "io_console.h"
+#include "io_proto.h"
 
 #include "firmware.h"
 
@@ -42,11 +42,11 @@ static void _config_write_word32(uint32_t full_adr, uint32_t word);
 
 //-----------------------Task list--------------------------------------------
 void StartDefaultTask   (void *pvParameters);
-void ConsoleMsgTask     (void *pvParameters);
+void ProtoMsgTask       (void *pvParameters);
 //----------------------------------------------------------------------------
 
 //-----------------------Semaphore list---------------------------------------
-xSemaphoreHandle xbConsoleRx;//get cmd from console
+xSemaphoreHandle xbProtoRx;//get cmd from proto
 //----------------------------------------------------------------------------
 
 //-----------------------Queue list-------------------------------------------
@@ -68,7 +68,7 @@ int main(void)
     //----------------------------------------------------------------------------
 
     //-----------------------Creating semaphores----------------------------------
-    vSemaphoreCreateBinary(xbConsoleRx);
+    vSemaphoreCreateBinary(xbProtoRx);
     //----------------------------------------------------------------------------
 
     //-----------------------Creating queues--------------------------------------
@@ -77,11 +77,11 @@ int main(void)
 
     //-----------------------Creating tasks---------------------------------------
     xTaskCreate(StartDefaultTask, "StartDefaultTask", configMINIMAL_STACK_SIZE * 16, NULL, (tskIDLE_PRIORITY),     NULL);
-    xTaskCreate(ConsoleMsgTask,   "ConsoleMsgTask",   configMINIMAL_STACK_SIZE * 16, NULL, (tskIDLE_PRIORITY + 1), NULL);
+    xTaskCreate(ProtoMsgTask,     "ProtoMsgTask",     configMINIMAL_STACK_SIZE * 16, NULL, (tskIDLE_PRIORITY + 1), NULL);
     //----------------------------------------------------------------------------
 
     //-----------------------Semaphores takes-------------------------------------
-    xSemaphoreTake(xbConsoleRx, portMAX_DELAY);
+    xSemaphoreTake(xbProtoRx, portMAX_DELAY);
     //----------------------------------------------------------------------------
 
     //----------------------------------------------------------------------------
@@ -233,17 +233,17 @@ void StartDefaultTask (void *pvParameters)
 #define BUFFSIZE        (8192)
 uint8_t buf[BUFFSIZE] = {0};
 
-void ConsoleMsgTask (void *pvParameters)
+void ProtoMsgTask (void *pvParameters)
 {
     printf("ConsoleMsgkTask...Start\r\n");
-    io_console_init(&_ser, buf, BUFFSIZE);
+    io_proto_init(&_ser, buf, BUFFSIZE);
 
     HAL_GPIO_TogglePin(Debug_GPIO_Port, Debug_Pin);
 
     while (1)
     {
-        xSemaphoreTake(xbConsoleRx, 500);
-        io_console_process();
+        xSemaphoreTake(xbProtoRx, 500);
+        io_proto_process();
     }
 }
 //------------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ static void _serial_idle_handler(io_serial_h *ser)
 {
     UART_HandleTypeDef *p = ser->phuart;
     p->Instance->CR1 &= (~UART_IT_IDLE);
-    xSemaphoreGiveFromISR(xbConsoleRx, NULL);
+    xSemaphoreGiveFromISR(xbProtoRx, NULL);
 }
 
 /*-----------------------------------------------------------
