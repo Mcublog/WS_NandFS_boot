@@ -97,7 +97,7 @@ static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf)
 #define DEVICE_NAME "Test_boot_v0"
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
 {
-    uint8_t p0[]=DEVICE_NAME;
+    uint8_t p0[] = DEVICE_NAME;
 
     console_form_head("GET_NAME", "string", "1" , cl_cmd);
     console_form_comp(&cl_cmd->param.p[0], p0);
@@ -114,7 +114,7 @@ extern void set_boot_mark(void);
 static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf)
 {
     console_form_head("JMP_APP", "string", "1" , cl_cmd);
-    console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"OK");
+    console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"OK");
     console_cmd_form_complete(cl_cmd, buf);
 
     set_boot_mark();
@@ -128,7 +128,10 @@ static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf)
 -----------------------------------------------------------*/
 static void _write_app(console_cmd_t* cl_cmd, uint8_t *buf)
 {
+    uint8_t bin_size = cl_cmd->param.p[0].size;
+    printf("Bin size: %d\r\n", bin_size);
+
     console_form_head("WRITE_APP", "string", "1" , cl_cmd);
-    console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"OK");
+    console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"OK");
     console_cmd_form_complete(cl_cmd, buf);
 }
