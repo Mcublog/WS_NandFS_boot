@@ -136,11 +136,11 @@ static void _write_app(proto_cmd_t* cl_cmd, uint8_t *buf)
     uint32_t size = cl_cmd->param.p[0].size;
     printf("Data size: %d\r\n", size);
     
-//    io_fs_file firmware;
-//    io_fs_file_open(&firmware, "firmware", IO_FS_O_RDWR | IO_FS_O_CREAT);
-//    io_fs_file_rewind(&firmware);
-//    io_fs_file_write(&firmware, cl_cmd->param.p[0].data, size);
-//    io_fs_file_close(&firmware);
+    io_fs_file firmware;
+    io_fs_file_open(&firmware, "firmware", IO_FS_O_RDWR | IO_FS_O_CREAT);
+    io_fs_file_rewind(&firmware);
+    io_fs_file_write(&firmware, cl_cmd->param.p[0].data, size);
+    io_fs_file_close(&firmware);
     
     proto_form_head("WRITE_APP", "string", "1" , cl_cmd);
     proto_form_comp(&cl_cmd->param.p[0], (uint8_t*)"OK");
@@ -156,6 +156,6 @@ static void _write_app(proto_cmd_t* cl_cmd, uint8_t *buf)
 static void _get_fw_ver(proto_cmd_t* cl_cmd, uint8_t *buf)
 {
     proto_form_head("GET_FW_VER", "string", "1" , cl_cmd);
-    proto_form_comp(&cl_cmd->param.p[0], (uint8_t*)"FW_VER");
+    proto_form_comp(&cl_cmd->param.p[0], (uint8_t*) FW_VER);
     proto_cmd_form_complete(cl_cmd, buf);    
 }

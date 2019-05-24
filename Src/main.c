@@ -87,38 +87,36 @@ int main(void)
     //----------------------------------------------------------------------------
     io_serial_callback_reg(&_ser, IDLE_CALLBACK, (io_callback_handler_t) _serial_idle_handler);
 
-    //----------------------------------------------------------------------------
-    io_fs_file file;
-
-    volatile int32_t err = io_fs_init();
-
+    //-----------------------Some preliminary steps-------------------------------
+    // Check  internal flash
+    uint32_t *check = (uint32_t *)MAIN_PROGRAM_START_ADDRESS;
+    if (*check != 0xFFFFFFFF)
+    {
+        // Erase the firmware in the internal flash
+        printf("Erase internal flash...\r\n");
+        HAL_FLASH_Unlock();
+        FLASH_Erase_Sector(FLASH_SECTOR_5, FLASH_VOLTAGE_RANGE_3);
+        HAL_FLASH_Lock();
+    }
+    
+    // Delete firmware file
+    io_fs_file firmware;
+    int32_t err = io_fs_init();
     err = io_fs_mount();
     if (err < 0)
     {
         printf("Format...\r\n");
         err = io_fs_format();
         err = io_fs_mount();
-    }
+    }    
 
-    // read current count
-    uint32_t boot_count = 0;
-    err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
-    err = io_fs_file_read(&file, &boot_count, sizeof(boot_count));
+    printf("Delete firmware from the FS...\r\n");
+    io_fs_file_delete("firmware");
 
-    // update boot count
-    boot_count += 1;
-    err = io_fs_file_rewind(&file);
-    err = io_fs_file_write(&file, &boot_count, sizeof(boot_count));
-    // remember the storage is not updated until the file is closed successfully
-    err = io_fs_file_close(&file);
-
-    // release any resources we were using
-    err = io_fs_unmount();
-
-    // print the boot count
-    printf("boot_count: %d\n", boot_count);
     //----------------------------------------------------------------------------
+    
 
+    
     osKernelStart();
     while (1)
     {
@@ -153,6 +151,23 @@ void copy_and_jmp_to_app(void)
 -----------------------------------------------------------*/
 void set_boot_mark(void)
 {
+    io_fs_file firmware;
+    int32_t err = io_fs_file_open(&firmware, "firmware", IO_FS_O_RDONLY);
+    if (err < 0)
+    {
+        printf("Firmware's file not found\r\n");
+        return;
+    }
+    uint32_t size = io_fs_file_get_size(&firmware);
+    io_fs_file_rewind(&firmware);
+    for (uint32_t i = 0; i < (size >> 2); i++)
+    {
+        uint32_t data;
+        io_fs_file_read(&firmware, (void *) &data, 4);
+        _config_write_word32(MAIN_PROGRAM_START_ADDRESS + (i * 4), data);        
+    }
+    io_fs_file_close(&firmware);
+    
     uint32_t *prst = (uint32_t*)(BKP_BASE + MMNGR_BACKUPRAM_OFFSET);
 
     HAL_PWR_EnableBkUpAccess();
@@ -202,17 +217,18 @@ void StartDefaultTask (void *pvParameters)
     int err = 0;
     io_fs_file file;
     uint32_t boot_count = 0;
+    
+    err = io_fs_mount();
+    if (err < 0)
+    {
+        printf("Format...\r\n");
+        err = io_fs_format();
+        err = io_fs_mount();
+    }
 
     while(1)
     {
         vTaskDelay(5000);
-        err = io_fs_mount();
-        if (err < 0)
-        {
-            printf("Format...\r\n");
-            err = io_fs_format();
-            err = io_fs_mount();
-        }
 
         // read current count
         err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
@@ -222,7 +238,7 @@ void StartDefaultTask (void *pvParameters)
 //        err = io_fs_file_rewind(&file);
 //        err = io_fs_file_write(&file, &boot_count, sizeof(boot_count));
         err = io_fs_file_close(&file);
-        err = io_fs_unmount();
+        //err = io_fs_unmount();
 
         //printf("boot_count: %d\n", boot_count);
    }

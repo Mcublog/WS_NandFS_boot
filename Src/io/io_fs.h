@@ -47,6 +47,8 @@ int io_fs_file_read(io_fs_file *file, void *buffer,  uint32_t size);
 int io_fs_file_write(io_fs_file *file, void *buffer, uint32_t size);
 
 int io_fs_file_rewind(io_fs_file *file);
+int io_fs_file_get_size(io_fs_file *file);
+int io_fs_file_delete(const char *path);
 
 
 #endif // IO_FS_H

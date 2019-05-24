@@ -2,7 +2,7 @@
  * IDE Project: ARM Keil uVision v5.23
  * Target board: Waveshare Open407V-C
  * LittleFs run on parallel NAND Flash
- * Test boot from external NAND (TODO)
+ * Test boot from external NAND
  * Data exchange on USART3
  * Using RTT for debugging
 

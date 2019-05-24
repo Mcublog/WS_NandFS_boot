@@ -10,6 +10,7 @@
 //[CMD's components]
 
 //-----------------------Types and definition---------------------------------
+#define CL_MAX_SIZE_BUFF    (8192)
 #define CL_START_SYM    ('[')
 #define CL_STOP_SYM     (']')
 
@@ -85,7 +86,7 @@ Exit function if char matches 0;
 -----------------------------------------------------------*/
 static uint8_t *_findchr(const uint8_t *pbuf, uint8_t c)
 {
-    for (uint32_t i = 0; i < 8192; i++)
+    for (uint32_t i = 0; i < CL_MAX_SIZE_BUFF; i++)
     {
         if (pbuf[i] == 0) return NULL;
         else if (pbuf[i] == c)
@@ -346,7 +347,7 @@ uint32_t proto_cmd_get_size(const uint8_t* buf)
     if (check_start_stop_symb(buf))
     {
         size = *((uint32_t*)&buf[1]);
-        if (size < 8192) return size;
+        if (size < CL_MAX_SIZE_BUFF) return size;
     }
     return 0;
 }

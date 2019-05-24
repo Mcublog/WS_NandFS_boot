@@ -202,3 +202,18 @@ int io_fs_file_rewind(io_fs_file *file)
 {
     return lfs_file_rewind(&_lfs, &file->f);
 }
+
+/*-----------------------------------------------------------
+/brief: Get file size
+/param: Pointer to the io_fs_file
+/return: the number of bytes written, or a negative error code on failure
+-----------------------------------------------------------*/
+int io_fs_file_get_size(io_fs_file *file)
+{
+    return lfs_file_size(&_lfs, &file->f);
+}
+
+int io_fs_file_delete(const char *path)
+{
+    return lfs_remove(&_lfs, path);
+}
