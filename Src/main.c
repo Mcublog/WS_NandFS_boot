@@ -268,7 +268,7 @@ static void _serial_idle_handler(io_serial_h *ser)
 -----------------------------------------------------------*/
 static void _config_write_word32(uint32_t full_adr, uint32_t word)
 {
-    HAL_StatusTypeDef s=HAL_ERROR;
+    HAL_StatusTypeDef s = HAL_ERROR;
     HAL_FLASH_Unlock();
 
     while (s==HAL_ERROR)

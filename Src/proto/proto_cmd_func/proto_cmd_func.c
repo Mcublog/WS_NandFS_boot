@@ -7,11 +7,12 @@
 #include "stm32f4xx_hal.h"
 
 #include "io_fs.h"
-
+#include "fw_ver.h"
 //-----------------------Local variables and function-------------------------
 static void _get_name(proto_cmd_t* cl_cmd, uint8_t *buf);
 static void _jmp_app(proto_cmd_t* cl_cmd, uint8_t *buf);
 static void _write_app(proto_cmd_t* cl_cmd, uint8_t *buf);
+static void _get_fw_ver(proto_cmd_t* cl_cmd, uint8_t *buf);
 
 static void _unknown_cmd(proto_cmd_t* cl_cmd, uint8_t *buf);
 
@@ -22,6 +23,7 @@ static const cmd_t cmd_list[] =
                         {Get_Name,         "GET_NAME",          &_get_name},
                         {Jmp_App,          "JMP_APP",           &_jmp_app},
                         {Write_App,        "WRITE_APP",         &_write_app},
+                        {Get_Fw_Ver,       "GET_FW_VER",        &_get_fw_ver},
 //------------------------------------------------------------------------------
                         {ID_LAST_CMD,      "LAST_CMD",          NULL}
 };
@@ -143,4 +145,17 @@ static void _write_app(proto_cmd_t* cl_cmd, uint8_t *buf)
     proto_form_head("WRITE_APP", "string", "1" , cl_cmd);
     proto_form_comp(&cl_cmd->param.p[0], (uint8_t*)"OK");
     proto_cmd_form_complete(cl_cmd, buf);
+}
+
+/*-----------------------------------------------------------
+/Get Firmware version
+/param: Pointer to cmd
+/param: Pointer to TX buf
+/return:
+-----------------------------------------------------------*/
+static void _get_fw_ver(proto_cmd_t* cl_cmd, uint8_t *buf)
+{
+    proto_form_head("GET_FW_VER", "string", "1" , cl_cmd);
+    proto_form_comp(&cl_cmd->param.p[0], (uint8_t*)"FW_VER");
+    proto_cmd_form_complete(cl_cmd, buf);    
 }
