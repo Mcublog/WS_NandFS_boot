@@ -345,23 +345,7 @@ uint32_t console_cmd_get_size(const uint8_t* buf)
     uint32_t size = 0;
     if (check_start_stop_symb(buf))
     {
-        size = (uint32_t) buf[1];
-        if (size < 8192) return size;
-    }
-    return 0;
-}
-
-/*-----------------------------------------------------------
-/brief: Set total bytes of the all package
-/param: Pointer to buf with CMD and data
-/return: Total package size or 0 if error
------------------------------------------------------------*/
-uint32_t console_cmd_set_size(const uint8_t* buf)
-{
-    uint32_t size = 0;
-    if (check_start_stop_symb(buf))
-    {
-        size = (uint32_t) buf[1];
+        size = *((uint32_t*)&buf[1]);
         if (size < 8192) return size;
     }
     return 0;

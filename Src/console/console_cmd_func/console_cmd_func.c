@@ -2,8 +2,11 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "stm32f4xx_hal.h"
+
+#include "io_fs.h"
 
 //-----------------------Local variables and function-------------------------
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf);
@@ -128,9 +131,15 @@ static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf)
 -----------------------------------------------------------*/
 static void _write_app(console_cmd_t* cl_cmd, uint8_t *buf)
 {
-    uint8_t bin_size = cl_cmd->param.p[0].size;
-    printf("Bin size: %d\r\n", bin_size);
-
+    uint32_t size = cl_cmd->param.p[0].size;
+    printf("Data size: %d\r\n", size);
+    
+//    io_fs_file firmware;
+//    io_fs_file_open(&firmware, "firmware", IO_FS_O_RDWR | IO_FS_O_CREAT);
+//    io_fs_file_rewind(&firmware);
+//    io_fs_file_write(&firmware, cl_cmd->param.p[0].data, size);
+//    io_fs_file_close(&firmware);
+    
     console_form_head("WRITE_APP", "string", "1" , cl_cmd);
     console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"OK");
     console_cmd_form_complete(cl_cmd, buf);

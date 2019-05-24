@@ -9,12 +9,18 @@
 #include "console_cmd_func/console_cmd_func.h"
 
 //-----------------------Local variables and function-------------------------
+typedef enum
+{
+    CON_COMPLETE,
+    CON_WAIT_BYTES
+}console_rx_state_t;
+
 //uint8_t *_buf = NULL;
 io_console_handler_t    _con = {0};
 console_cmd_t           _cmd_rx = {0};
 
 static void     _console_start_rx(void);
-static uint32_t _console_data_check(void);
+static uint32_t _console_data_check(console_rx_state_t *state);
 static uint32_t _console_try_parse(void);
 static void     _console_continue_woking(void);
 //----------------------------------------------------------------------------
@@ -34,7 +40,7 @@ static void _console_start_rx(void)
 /param:
 /return: 0 if error, number data bytes
 -----------------------------------------------------------*/
-static uint32_t _console_data_check(void)
+static uint32_t _console_data_check(console_rx_state_t *state)
 {
     uint32_t bytes_rx = 0, i = 0;
     io_serial_type_h type = io_serial_get_type(_con.ser);
@@ -48,13 +54,14 @@ static uint32_t _console_data_check(void)
     if (i >= 5)
     {
         bytes_rx = console_cmd_get_size(_con.buf);
-        if (type == IO_UART) i = bytes_rx;
         if (i != bytes_rx)
         {
+            *state = CON_WAIT_BYTES;
             return 0;
         }
         else
         {
+            *state = CON_COMPLETE;
             //Check header, if broken then restart RX
             if ( check_start_stop_symb(_con.buf)) return bytes_rx;  
             else
@@ -64,7 +71,11 @@ static uint32_t _console_data_check(void)
             }
         }
     }
-    else return 0;
+    else
+    {
+        *state = CON_WAIT_BYTES;
+        return 0;
+    }
 }
 
 /*-----------------------------------------------------------
@@ -110,7 +121,8 @@ void io_console_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
 -----------------------------------------------------------*/
 void io_console_process(void)
 {
-    uint32_t data_count = _console_data_check();
+    console_rx_state_t  state = CON_COMPLETE;
+    uint32_t data_count = _console_data_check(&state);
     
     if (data_count)
     {
@@ -138,5 +150,5 @@ void io_console_process(void)
         _console_continue_woking();
     }
 
-    _console_start_rx();
+    if (state == CON_COMPLETE) _console_start_rx(); //Reset pointers to start index of the buf_rx;
 }

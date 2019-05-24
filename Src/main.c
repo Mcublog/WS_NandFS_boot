@@ -224,7 +224,7 @@ void StartDefaultTask (void *pvParameters)
         err = io_fs_file_close(&file);
         err = io_fs_unmount();
 
-        printf("boot_count: %d\n", boot_count);
+        //printf("boot_count: %d\n", boot_count);
    }
 }
 //------------------------------------------------------------------------------------
