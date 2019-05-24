@@ -40,11 +40,11 @@ static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
                                     uint32_t size,
                                     uint8_t *b);
 
-static uint32_t _get_cmd_param( console_cmd_t* cl_cmd,
-                                uint32_t num_param,
-                                uint8_t* param);
+static uint32_t _get_string_params( console_cmd_t* cl_cmd,
+                                    uint32_t num_param,
+                                    uint8_t* param);
 
-static uint8_t* _get_string_param(comp_t* comp, uint8_t* buf);
+static uint8_t* _get_string_comp(comp_t* comp, uint8_t* buf);
 static uint8_t* _get_bin_comp(comp_t* comp, uint8_t* buf, uint32_t all_size);
 static param_type_t _get_type_comp(comp_t* comp);
 //*-----------------------------------------------------------
@@ -67,7 +67,7 @@ static param_type_t _get_type_comp(comp_t* comp);
 /param: Buffer size
 /return: 1 if buffer not equal
 -----------------------------------------------------------*/
-static uint32_t _buffncmp(uint8_t *b1, uint8_t *b2, uint32_t num)
+static uint32_t _buffncmp(const uint8_t *b1, const uint8_t *b2, uint32_t num)
 {
     for (uint32_t i = 0; i < num; i++)
     {
@@ -90,9 +90,10 @@ static uint8_t *_findchr(const uint8_t *pbuf, uint8_t c)
         if (pbuf[i] == 0) return NULL;
         else if (pbuf[i] == c)
         {
-            return &pbuf[i];
+            return (uint8_t*)&pbuf[i];
         }
     }
+    return NULL;
 }
 
 /*-----------------------------------------------------------
@@ -129,7 +130,7 @@ static uint8_t* _get_bin_comp(comp_t* comp, uint8_t* buf, uint32_t all_size)
     uint8_t* e;//end char
     uint32_t n;//number of char to copy
 
-    s = (uint8_t*) _findchr((const char*) buf, CL_START_SYM);
+    s = (uint8_t*) _findchr((const uint8_t*) buf, CL_START_SYM);
     e = &buf[all_size - CRC32_OFFSET_COUNT - CL_SIZE_START_STOP_SYMB - 1];
     n = e - s;
     comp->size = n;
@@ -150,8 +151,8 @@ static uint8_t* _get_string_comp(comp_t* comp, uint8_t* buf)
     uint8_t* e;//end char
     uint32_t n;//number of char to copy
 
-    s = _findchr((const char*) buf, CL_START_SYM);
-    e = _findchr((const char*) buf, CL_STOP_SYM);
+    s = _findchr((const uint8_t*) buf, CL_START_SYM);
+    e = _findchr((const uint8_t*) buf, CL_STOP_SYM);
     n = e - s;
     comp->size = n - 1;
     comp->data = &s[1];
@@ -168,10 +169,10 @@ static param_type_t _get_type_comp(comp_t* comp)
 {
     uint8_t *type = comp->data;
 
-    if (memcmp  (comp->data, "string", sizeof("string") - 1) == 0)
+    if (memcmp  (type, "string", sizeof("string") - 1) == 0)
         return PRM_STRING_TYPE;
 
-    if (memcmp  (comp->data, "bin", sizeof("bin") - 1) == 0)
+    if (memcmp  (type, "bin", sizeof("bin") - 1) == 0)
         return PRM_BIN_TYPE;
 
     return PRM_UNKNOWN;
@@ -228,9 +229,9 @@ static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
 /param: Pointer to first param
 /return: 1 if all good
 -----------------------------------------------------------*/
-static uint32_t _get_string_param(  console_cmd_t* cl_cmd,
-                                    uint32_t num_param,
-                                    uint8_t* param)
+static uint32_t _get_string_params(  console_cmd_t* cl_cmd,
+                                     uint32_t num_param,
+                                     uint8_t* param)
 {
     for (uint32_t i = 0; i < num_param; i++)
     {
@@ -323,8 +324,8 @@ uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
             num = atoi((const char*)cl_cmd->size.data);
 
             param_type_t type = _get_type_comp(&cl_cmd->type);
-            if      (type == PRM_STRING_TYPE) _get_string_param(&cl_cmd, num, b);
-            else if (type == PRM_BIN_TYPE)    _get_bin_comp(cl_cmd->param, b, cl_cmd->size_all);
+            if      (type == PRM_STRING_TYPE) _get_string_params(cl_cmd, num, b);
+            else if (type == PRM_BIN_TYPE)    _get_bin_comp(&cl_cmd->param.p[0], b, cl_cmd->size_all);
             else return CLI_CORRUPT;//Unknow type
 
             return CLI_OK;
@@ -342,7 +343,7 @@ uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
 uint32_t console_cmd_get_size(const uint8_t* buf)
 {
     uint32_t size = 0;
-    if (_check_start_stop_symb(buf))
+    if (check_start_stop_symb(buf))
     {
         size = (uint32_t) buf[1];
         if (size < 8192) return size;
@@ -358,7 +359,7 @@ uint32_t console_cmd_get_size(const uint8_t* buf)
 uint32_t console_cmd_set_size(const uint8_t* buf)
 {
     uint32_t size = 0;
-    if (_check_start_stop_symb(buf))
+    if (check_start_stop_symb(buf))
     {
         size = (uint32_t) buf[1];
         if (size < 8192) return size;
