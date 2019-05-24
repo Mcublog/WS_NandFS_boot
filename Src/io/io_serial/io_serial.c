@@ -40,7 +40,7 @@ static void _hw_init(io_serial_h *ser)
         MX_USART3_UART_Init();
 
         ser->phuart = &huart3;
-        ser->phdma  = &hdma_usart3_rx;        
+        ser->phdma  = &hdma_usart3_rx;
     }
     // TODO: else if (ser->type == IO_USB);
 }
@@ -53,12 +53,12 @@ static void _hw_init(io_serial_h *ser)
 static void _hw_deinit(io_serial_h *ser)
 {
     if (ser->type == IO_UART)
-    {        
+    {
         ser->type = IO_NONE;
-        
+
         MX_DMA_Deinit();
         MX_USART3_UART_Deinit();
-    
+
         ser->phuart = NULL;
         ser->phdma  = NULL;
     }
@@ -92,7 +92,7 @@ static void _hw_set_idle_irq(io_serial_h *ser)
 static void _hw_tx_data(io_serial_h *ser, uint8_t *buf, uint32_t size)
 {
     if (ser->type == IO_UART)
-    {   
+    {
         //---------- HW Specific ---------------------
         UART_HandleTypeDef *p = ser->phuart;
         HAL_UART_Transmit(p, buf, size, 1000);
@@ -132,15 +132,15 @@ static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, ui
     {
         //---------- HW Specific ---------------------
         UART_HandleTypeDef *phuart = ser->phuart;
-    
-        HAL_UART_DMAStop(phuart); 
-        HAL_UART_Receive_DMA(phuart, buf, size);  
+
+        HAL_UART_DMAStop(phuart);
+        HAL_UART_Receive_DMA(phuart, buf, size);
         _hw_set_idle_irq(ser);
         //---------- HW Specific ---------------------
     }
     else if (ser->type == IO_USB)
     {
-        //Clear header 
+        //Clear header
         memset((void*)buf, 0, 5);
     }
 }
@@ -153,7 +153,7 @@ static void _hw_set_usart_dma_rx_and_idle_irq(io_serial_h *ser, uint8_t *buf, ui
 static uint32_t _hw_get_uart_irq_status(io_serial_h *ser)
 {
     uint32_t status = 0;
-    
+
     //---------- HW Specific ---------------------
     UART_HandleTypeDef *p = ser->phuart;
     uint32_t isrflags = UT_READ_REG(p->Instance->SR);
@@ -173,13 +173,13 @@ static uint32_t _hw_get_uart_irq_status(io_serial_h *ser)
 /return:
 -----------------------------------------------------------*/
 void io_serial_init(io_serial_h *ser, io_serial_type_h type)
-{   
+{
     ser->type = type;
     for (uint32_t i = 0; i < LAST_CALLBACK; i++)
     {
         io_serial_callback_unreg(ser, (io_callback_id_t) i);
     }
-    
+
     _hw_init(ser);
 }
 
@@ -307,5 +307,5 @@ void io_serial_callback_call(io_serial_h *ser)
                 ser->callback_list[i]((void*)ser);
             }
         }
-    }    
+    }
 }

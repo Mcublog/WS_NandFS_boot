@@ -9,8 +9,8 @@
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf);
 static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf);
 static void _write_app(console_cmd_t* cl_cmd, uint8_t *buf);
-    
-static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);    
+
+static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf);
 
 static const cmd_t cmd_list[] =
 {
@@ -33,9 +33,9 @@ static const cmd_t cmd_list[] =
 void cmd_function_crc32_error(console_cmd_t* cl_cmd, uint8_t* buf)
 {
     console_form_head("ERROR_MSG", "string", "1", cl_cmd);
-    
+
     console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"CRC32_FAIL");
-    
+
     console_cmd_form_complete(cl_cmd, buf);
 }
 
@@ -48,18 +48,18 @@ void cmd_function_crc32_error(console_cmd_t* cl_cmd, uint8_t* buf)
 void cmd_function_pkt_corrupt(console_cmd_t* cl_cmd, uint8_t* buf)
 {
     console_form_head("ERROR_MSG", "string", "1", cl_cmd);
-    
+
     console_form_comp(&cl_cmd->param.p[0], (uint8_t*)"PKT_CORRUPT");
-    
-    console_cmd_form_complete(cl_cmd, buf); 
+
+    console_cmd_form_complete(cl_cmd, buf);
 }
 
 /*-----------------------------------------------------------
 /Run CMD's handler
 /param: Pointer to cmd
 /param: Pointer to console handler
-/вовращает:
------------------------------------------------------------*/                       
+/return:
+-----------------------------------------------------------*/
 void cmd_fuction_caller(console_cmd_t* cl_cmd, io_console_handler_t *con_h)
 {
     volatile cmd_id_t id = get_cmd_id(&cl_cmd->name, cmd_list);
@@ -84,8 +84,8 @@ static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf)
     console_form_head("ERROR_MSG", "string", "1" , cl_cmd);
 
     console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"UNKNOWN_CMD");
-    
-    console_cmd_form_complete(cl_cmd, buf);    
+
+    console_cmd_form_complete(cl_cmd, buf);
 }
 
 /*-----------------------------------------------------------
@@ -93,7 +93,7 @@ static void _unknown_cmd(console_cmd_t* cl_cmd, uint8_t *buf)
 /param: Pointer to cmd
 /param: Pointer to TX buf
 /return:
------------------------------------------------------------*/ 
+-----------------------------------------------------------*/
 #define DEVICE_NAME "Test_boot_v0"
 static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
 {
@@ -101,7 +101,7 @@ static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
 
     console_form_head("GET_NAME", "string", "1" , cl_cmd);
     console_form_comp(&cl_cmd->param.p[0], p0);
-    console_cmd_form_complete(cl_cmd, buf);     
+    console_cmd_form_complete(cl_cmd, buf);
 }
 
 /*-----------------------------------------------------------
@@ -109,14 +109,14 @@ static void _get_name(console_cmd_t* cl_cmd, uint8_t *buf)
 /param: Pointer to cmd
 /param: Pointer to TX buf
 /return:
------------------------------------------------------------*/ 
+-----------------------------------------------------------*/
 extern void set_boot_mark(void);
 static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf)
 {
     console_form_head("JMP_APP", "string", "1" , cl_cmd);
     console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"OK");
     console_cmd_form_complete(cl_cmd, buf);
-    
+
     set_boot_mark();
 }
 
@@ -125,10 +125,10 @@ static void _jmp_app(console_cmd_t* cl_cmd, uint8_t *buf)
 /param: Pointer to cmd
 /param: Pointer to TX buf
 /return:
------------------------------------------------------------*/ 
+-----------------------------------------------------------*/
 static void _write_app(console_cmd_t* cl_cmd, uint8_t *buf)
 {
     console_form_head("WRITE_APP", "string", "1" , cl_cmd);
     console_form_comp(&cl_cmd->param.p[0],(uint8_t*)"OK");
-    console_cmd_form_complete(cl_cmd, buf);    
+    console_cmd_form_complete(cl_cmd, buf);
 }

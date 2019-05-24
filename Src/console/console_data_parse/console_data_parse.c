@@ -1,33 +1,52 @@
 #include "console_data_parse.h"
 
-#include <string.h> 
+#include <string.h>
 #include <stdlib.h>
 
 #include "../crc32/crc32.h"
 
 
-#define CL_START_SYM ('[')
-#define CL_STOP_SYM (']')
-
-#define CL_SIZE_START_STOP_SYMB (2)
-#define CL_SIZE_END_SYMB (2)
-
-#define CL_START_CMD_NAME_IDX (6) // Start of [CMD's Name] components
-
-#define CRC32_OFFSET_IDX (7)    // Crc offset. It is to get crc from package
-#define CRC32_OFFSET_COUNT (8)  // Number of service characters (Subtract from the total package size)
-
 //[Total packet size][CMD's name][Type][Number of parameters][Param1]..[P20]
 //[CMD's components]
 
+//-----------------------Types and definition---------------------------------
+#define CL_START_SYM    ('[')
+#define CL_STOP_SYM     (']')
+
+#define CL_SIZE_START_STOP_SYMB (2)
+#define CL_SIZE_END_SYMB        (2)
+
+#define CL_START_CMD_NAME_IDX   (6) // Start of [CMD's Name] components
+
+#define CRC32_OFFSET_IDX    (7)  // Crc offset. It is to get crc from package
+#define CRC32_OFFSET_COUNT  (8)  // Number of service characters (Subtract from the total package size)
+
+typedef enum
+{
+    PRM_STRING_TYPE = 0,
+    PRM_BIN_TYPE,
+    PRM_UNKNOWN
+}param_type_t;
+//----------------------------------------------------------------------------
+
 //-----------------------Local variables and function-------------------------
-static uint8_t* set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b);
-static uint8_t* set_cmd_comp_bin(   comp_t* comp,
-                                    uint8_t* data, uint32_t size,
+static uint32_t _buffncmp(const uint8_t *b1, const uint8_t *b2, uint32_t num);
+static uint8_t *_findchr(const uint8_t *pbuf, uint8_t c);
+static uint32_t _console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32);
+static uint8_t* _set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b);
+
+static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
+                                    uint8_t* data,
+                                    uint32_t size,
                                     uint8_t *b);
 
-static uint32_t get_cmd_param(  console_cmd_t* cl_cmd,
-                                uint32_t num_param, uint8_t* param);
+static uint32_t _get_cmd_param( console_cmd_t* cl_cmd,
+                                uint32_t num_param,
+                                uint8_t* param);
+
+static uint8_t* _get_string_param(comp_t* comp, uint8_t* buf);
+static uint8_t* _get_bin_comp(comp_t* comp, uint8_t* buf, uint32_t all_size);
+static param_type_t _get_type_comp(comp_t* comp);
 //*-----------------------------------------------------------
 
 /*-----------------------------------------------------------
@@ -40,7 +59,7 @@ static uint32_t get_cmd_param(  console_cmd_t* cl_cmd,
      if (buf[0]=='['  && buf[5]==']') return 1;
      return 0;
  }
- 
+
  /*-----------------------------------------------------------
 /brief: Compare two buffers. Lenght b1 == b2
 /param: Pointer to data buffer1
@@ -48,14 +67,33 @@ static uint32_t get_cmd_param(  console_cmd_t* cl_cmd,
 /param: Buffer size
 /return: 1 if buffer not equal
 -----------------------------------------------------------*/
-uint32_t buffncmp(uint8_t *b1, uint8_t *b2, uint32_t num)
+static uint32_t _buffncmp(uint8_t *b1, uint8_t *b2, uint32_t num)
 {
     for (uint32_t i = 0; i < num; i++)
     {
         if (b1[i] != b2[i]) return 1;
     }
     return 0;
-} 
+}
+
+ /*-----------------------------------------------------------
+/brief: Find char in the line
+/param: Pointer to the data buffer
+/param: Search character
+/return: NULL if char is not found, or his memory addres
+Exit function if char matches 0;
+-----------------------------------------------------------*/
+static uint8_t *_findchr(const uint8_t *pbuf, uint8_t c)
+{
+    for (uint32_t i = 0; i < 8192; i++)
+    {
+        if (pbuf[i] == 0) return NULL;
+        else if (pbuf[i] == c)
+        {
+            return &pbuf[i];
+        }
+    }
+}
 
 /*-----------------------------------------------------------
 /brief: Check crc from buffer
@@ -64,21 +102,40 @@ uint32_t buffncmp(uint8_t *b1, uint8_t *b2, uint32_t num)
 /param: Pointer to crc32. This returns the calculated crc32.
 /return: 1 if buffer not equal
 -----------------------------------------------------------*/
-uint32_t console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32)
+static uint32_t _console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *crc32)
 {
     uint32_t crc_pkt = 0, crc = 0;
     uint32_t i = 0;
-    
-    for (i = 0; i < 4; i++)  
+
+    for (i = 0; i < 4; i++)
     {
-        if      (i == 0) crc_pkt  = (buf[size - CRC32_OFFSET_IDX +i]);
-        else if (i == 1) crc_pkt |= (buf[size - CRC32_OFFSET_IDX +i] << 8);
-        else if (i == 2) crc_pkt |= (buf[size - CRC32_OFFSET_IDX +i] << 16);
-        else             crc_pkt |= (buf[size - CRC32_OFFSET_IDX +i] << 24);
+        crc_pkt |= (buf[size - CRC32_OFFSET_IDX + i] << (8 * i));
     }
-    crc = xcrc32 (buf, size - CRC32_OFFSET_COUNT, 0xFFFFFFFF); 
+    crc = xcrc32 (buf, size - CRC32_OFFSET_COUNT, 0xFFFFFFFF);
     if (crc == crc_pkt) return 1;
-    return 0;  
+    return 0;
+}
+
+
+/*-----------------------------------------------------------
+/brief: Get BIN component from buffer
+/param: Pointer to the component
+/param: Pointer to the buff with the start of the component
+/return: Return pointer to the start of next component
+-----------------------------------------------------------*/
+static uint8_t* _get_bin_comp(comp_t* comp, uint8_t* buf, uint32_t all_size)
+{
+    uint8_t* s;//start char
+    uint8_t* e;//end char
+    uint32_t n;//number of char to copy
+
+    s = (uint8_t*) _findchr((const char*) buf, CL_START_SYM);
+    e = &buf[all_size - CRC32_OFFSET_COUNT - CL_SIZE_START_STOP_SYMB - 1];
+    n = e - s;
+    comp->size = n;
+    comp->data = &s[1];
+
+    return &buf[n]; //Go to the start of next component
 }
 
 /*-----------------------------------------------------------
@@ -87,20 +144,37 @@ uint32_t console_cmd_check_crc32(const uint8_t* buf, uint32_t size, uint32_t *cr
 /param: Pointer to buff
 /return: Return pointer to next component
 -----------------------------------------------------------*/
-static uint8_t* get_cmd_comp(comp_t* comp, uint8_t* buf)
+static uint8_t* _get_string_comp(comp_t* comp, uint8_t* buf)
 {
     uint8_t* s;//start char
     uint8_t* e;//end char
     uint32_t n;//number of char to copy
-    uint8_t* b = buf;
-    
-    s = (uint8_t*) strchr((const char*) buf, CL_START_SYM); 
-    e = (uint8_t*) strchr((const char*) buf, CL_STOP_SYM); 
+
+    s = _findchr((const char*) buf, CL_START_SYM);
+    e = _findchr((const char*) buf, CL_STOP_SYM);
     n = e - s;
     comp->size = n - 1;
-    comp->data = s + 1;
-    b += (n + 1);//Go to next component
-    return b;
+    comp->data = &s[1];
+
+    return &buf[n+1]; //Go to the start of next component
+}
+
+/*-----------------------------------------------------------
+/brief: Get parameters type
+/param: Pointer to Tpye component
+/return: Return type
+-----------------------------------------------------------*/
+static param_type_t _get_type_comp(comp_t* comp)
+{
+    uint8_t *type = comp->data;
+
+    if (memcmp  (comp->data, "string", sizeof("string") - 1) == 0)
+        return PRM_STRING_TYPE;
+
+    if (memcmp  (comp->data, "bin", sizeof("bin") - 1) == 0)
+        return PRM_BIN_TYPE;
+
+    return PRM_UNKNOWN;
 }
 
 /*-----------------------------------------------------------
@@ -110,7 +184,7 @@ static uint8_t* get_cmd_comp(comp_t* comp, uint8_t* buf)
 /param: Pointer to TX buff
 /return: Return pointer to next free space
 -----------------------------------------------------------*/
-static uint8_t* set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b)
+static uint8_t* _set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b)
 {
     comp->size = strlen((char*) s);
     *b = CL_START_SYM;
@@ -131,9 +205,10 @@ static uint8_t* set_cmd_comp(uint8_t *s, comp_t* comp, uint8_t *b)
 /param: Pointer to TX buff
 /return: Return pointer to next free space
 -----------------------------------------------------------*/
-static uint8_t* set_cmd_comp_bin(comp_t* comp,
-                                 uint8_t* data, uint32_t size,
-                                 uint8_t *b)
+static uint8_t* _set_cmd_comp_bin(  comp_t* comp,
+                                    uint8_t* data,
+                                    uint32_t size,
+                                    uint8_t *b)
 {
     comp->size = size;
     *b = CL_START_SYM;
@@ -147,18 +222,19 @@ static uint8_t* set_cmd_comp_bin(comp_t* comp,
 }
 
 /*-----------------------------------------------------------
-/brief: Get a number of components
+/brief: Get string types components
 /param: Pointer to CMD
 /param: Number of parameters
 /param: Pointer to first param
 /return: 1 if all good
 -----------------------------------------------------------*/
-static uint32_t get_cmd_param(console_cmd_t* cl_cmd,
-                              uint32_t num_param, uint8_t* param)
+static uint32_t _get_string_param(  console_cmd_t* cl_cmd,
+                                    uint32_t num_param,
+                                    uint8_t* param)
 {
     for (uint32_t i = 0; i < num_param; i++)
-    {      
-        param = get_cmd_comp(&cl_cmd->param.p[i], param);
+    {
+        param = _get_string_comp(&cl_cmd->param.p[i], param);
     }
     return 1;
 }
@@ -175,49 +251,49 @@ uint32_t console_cmd_set_size_and_end(console_cmd_t* cmd, uint8_t *b)
     uint32_t crc = 0;
     uint32_t crc_idx = 0;
     volatile uint32_t size_pkt = 0;
-    uint32_t num = atoi((const char*)cmd->size.data); 
+    uint32_t num = atoi((const char*)cmd->size.data);
     uint32_t size = cmd->name.size + CL_SIZE_START_STOP_SYMB;
     uint32_t i=0;
-       
+
     size = size + cmd->type.size + CL_SIZE_START_STOP_SYMB;
     size = size + cmd->size.size + CL_SIZE_START_STOP_SYMB;
-    
+
     for (i = 0; i < num; i++)
     {
         size = size + cmd->param.p[i].size + CL_SIZE_START_STOP_SYMB;
     }
-    
+
     size = size + CL_SIZE_START_STOP_SYMB + CL_SIZE_START_STOP_SYMB + CL_SIZE_END_SYMB;
-           
+
     for (i = 0; i < CL_SIZE_START_STOP_SYMB + CRC32_LENGHT; i++)
     {
        if     (i == 0)    b[size + i] = CL_START_SYM;
        else if(i == 1)
        {
-           b[size + i]= 0;
+           b[size + i] = 0;
            crc_idx = size + i;
        }
-       else if (i == 5)   b[size + i]= CL_STOP_SYM;
-       else b[size + i]= 0;
+       else if (i == 5)   b[size + i] = CL_STOP_SYM;
+       else b[size + i] = 0;
     }
-    
+
     size = size + CL_SIZE_END_SYMB + CL_SIZE_START_STOP_SYMB + CRC32_LENGHT;
     b[0] = CL_START_SYM;
-    *((uint32_t*)&b[1]) = size;  
-    b[5] = CL_STOP_SYM;    
-    
+    *((uint32_t*)&b[1]) = size;
+    b[5] = CL_STOP_SYM;
+
     *((uint32_t*)&b[crc_idx]) = 0;
-    
+
     // crc without stop and service char
     crc = xcrc32 (b, size - CL_SIZE_START_STOP_SYMB - CL_SIZE_END_SYMB-CRC32_LENGHT, 0xffffffff);
     *((uint32_t*)&b[crc_idx]) = crc;
 
     for (i = 0; i < CL_SIZE_END_SYMB; i++)
     {
-       if (i==0) b[size - 2]= '\r';
-       else      b[size - 1]= '\n';
+       if (i==0) b[size - 2] = '\r';
+       else      b[size - 1] = '\n';
     }
- 
+
     cmd->size_all = size;
     return cmd->size_all;
 }
@@ -234,24 +310,27 @@ uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
     uint8_t *b = (uint8_t*)&buf[6];
     uint32_t size = console_cmd_get_size(buf);
     uint32_t crc = 0;
-    
+
     if (size != 0)
     {
-        if (console_cmd_check_crc32(buf, size, &crc))
+        if (_console_cmd_check_crc32(buf, size, &crc))
         {
             cl_cmd->size_all = size;
-            b = get_cmd_comp(&cl_cmd->name, b);
-            b = get_cmd_comp(&cl_cmd->type, b);
-            b = get_cmd_comp(&cl_cmd->size, b);
-    
+            b = _get_string_comp(&cl_cmd->name, b);
+            b = _get_string_comp(&cl_cmd->type, b);
+            b = _get_string_comp(&cl_cmd->size, b);
+
             num = atoi((const char*)cl_cmd->size.data);
-    
-            get_cmd_param(cl_cmd, num, b);
+
+            param_type_t type = _get_type_comp(&cl_cmd->type);
+            if      (type == PRM_STRING_TYPE) _get_string_param(&cl_cmd, num, b);
+            else if (type == PRM_BIN_TYPE)    _get_bin_comp(cl_cmd->param, b, cl_cmd->size_all);
+            else return CLI_CORRUPT;//Unknow type
+
             return CLI_OK;
         }
         else return CLI_CRC_ERROR;
     }
-
     return CLI_CORRUPT;
 }
 
@@ -263,9 +342,9 @@ uint32_t console_cmd_parse(const uint8_t* buf, console_cmd_t* cl_cmd)
 uint32_t console_cmd_get_size(const uint8_t* buf)
 {
     uint32_t size = 0;
-    if (check_start_stop_symb(buf))
+    if (_check_start_stop_symb(buf))
     {
-        size = (uint32_t)buf[1];
+        size = (uint32_t) buf[1];
         if (size < 8192) return size;
     }
     return 0;
@@ -279,7 +358,7 @@ uint32_t console_cmd_get_size(const uint8_t* buf)
 uint32_t console_cmd_set_size(const uint8_t* buf)
 {
     uint32_t size = 0;
-    if (check_start_stop_symb(buf))
+    if (_check_start_stop_symb(buf))
     {
         size = (uint32_t) buf[1];
         if (size < 8192) return size;
@@ -297,7 +376,7 @@ cmd_id_t get_cmd_id(comp_t* comp, const cmd_t* cmd_list )
 {
     for (uint32_t i = 0; i < ID_LAST_CMD; i++)
     {
-        if (buffncmp(comp->data, (uint8_t*)cmd_list[i].s, comp->size) == 0)
+        if (_buffncmp(comp->data, (uint8_t*)cmd_list[i].s, comp->size) == 0)
         {
             return cmd_list[i].id;
         }
@@ -362,32 +441,32 @@ uint32_t console_cmd_form(console_cmd_t* cmd,
 
     uint32_t i = 0, num = 0;
     uint8_t *p;
-    
+
     p = &b[CL_START_CMD_NAME_IDX];
-    
-    p = set_cmd_comp(name, &cmd->name, p);
-    p = set_cmd_comp(type, &cmd->type, p);
-    p = set_cmd_comp(size, &cmd->size, p);
-    
+
+    p = _set_cmd_comp(name, &cmd->name, p);
+    p = _set_cmd_comp(type, &cmd->type, p);
+    p = _set_cmd_comp(size, &cmd->size, p);
+
     num = atoi((const char*)cmd->size.data);
     if (strncmp("string", (const char*)type, sizeof("string")) == 0)
     {
         for (i = 0; i < num; i++)
         {
-            p = set_cmd_comp(param[i].data, &cmd->param.p[i], p);
+            p = _set_cmd_comp(param[i].data, &cmd->param.p[i], p);
         }
     }
     else
     {
         for (i = 0; i < num; i++)
         {
-            p = set_cmd_comp_bin(&cmd->param.p[i], param[i].data, param[i].size, p);
+            p = _set_cmd_comp_bin(&cmd->param.p[i], param[i].data, param[i].size, p);
         }
     }
-    
+
     p = &b[0];
-    console_cmd_set_size_and_end(cmd, p);    
-    
+    console_cmd_set_size_and_end(cmd, p);
+
     return 0;
 }
 

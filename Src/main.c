@@ -31,7 +31,7 @@ static void _serial_idle_handler(io_serial_h *ser);
 void copy_and_jmp_to_app(void);
 
 void set_boot_mark(void);
-static void check_boot_mark(void);
+static void _check_boot_mark(void);
 
 
 static void _config_write_word32(uint32_t full_adr, uint32_t word);
@@ -58,9 +58,9 @@ int main(void)
 {
     //-----------------------HW init----------------------------------------------
     HAL_Init();
-    
-    check_boot_mark();
-    
+
+    _check_boot_mark();
+
     SystemClock_Config();
     MX_GPIO_Init();
     io_serial_init(&_ser, IO_UART);
@@ -89,17 +89,17 @@ int main(void)
 
     //----------------------------------------------------------------------------
     io_fs_file file;
-      
+
     volatile int32_t err = io_fs_init();
-    
+
     err = io_fs_mount();
-    if (err < 0)    
+    if (err < 0)
     {
         printf("Format...\r\n");
         err = io_fs_format();
         err = io_fs_mount();
     }
-    
+
     // read current count
     uint32_t boot_count = 0;
     err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
@@ -111,14 +111,14 @@ int main(void)
     err = io_fs_file_write(&file, &boot_count, sizeof(boot_count));
     // remember the storage is not updated until the file is closed successfully
     err = io_fs_file_close(&file);
-    
+
     // release any resources we were using
     err = io_fs_unmount();
 
     // print the boot count
     printf("boot_count: %d\n", boot_count);
     //----------------------------------------------------------------------------
-        
+
     osKernelStart();
     while (1)
     {
@@ -134,10 +134,10 @@ int main(void)
 void copy_and_jmp_to_app(void)
 {
     printf("firm_array size in WORD: %d\r\n", sizeof(firm_array));
-    
+
     HAL_FLASH_Unlock();
-    FLASH_Erase_Sector(FLASH_SECTOR_5, FLASH_VOLTAGE_RANGE_3);   
-    HAL_FLASH_Lock(); 
+    FLASH_Erase_Sector(FLASH_SECTOR_5, FLASH_VOLTAGE_RANGE_3);
+    HAL_FLASH_Lock();
     uint32_t *pword = (uint32_t*) firm_array;
     for (uint32_t i = 0; i < (sizeof(firm_array)>>2); i++)
     {
@@ -152,9 +152,9 @@ void copy_and_jmp_to_app(void)
 /return:
 -----------------------------------------------------------*/
 void set_boot_mark(void)
-{   
+{
     uint32_t *prst = (uint32_t*)(BKP_BASE + MMNGR_BACKUPRAM_OFFSET);
-    
+
     HAL_PWR_EnableBkUpAccess();
     *prst = 0xFFFFFFFF;
     HAL_PWR_DisableBkUpAccess();
@@ -167,32 +167,32 @@ void set_boot_mark(void)
 /param:
 /return:
 -----------------------------------------------------------*/
-static void check_boot_mark(void)
+static void _check_boot_mark(void)
 {
     volatile uint32_t *prst = (uint32_t*)(BKP_BASE + MMNGR_BACKUPRAM_OFFSET);
-    
+
     if (*prst == 0xFFFFFFFF)
     {
         typedef  void (*pFunction)(void);
-    
-        uint32_t jumpAddress = *((__IO uint32_t*) (MAIN_PROGRAM_START_ADDRESS + 4));     
-        pFunction Jump_To_Application = (pFunction) jumpAddress;        
-        
-        
+
+        uint32_t jumpAddress = *((volatile uint32_t*) (MAIN_PROGRAM_START_ADDRESS + 4));
+        pFunction Jump_To_Application = (pFunction) jumpAddress;
+
+
         HAL_PWR_EnableBkUpAccess();
-        *prst = 0;
+        *prst = 0; // clear boot mark
         HAL_PWR_DisableBkUpAccess();
-        
-        HAL_RCC_DeInit();  
+
+        HAL_RCC_DeInit();
         HAL_DeInit();
-        
+
         __disable_irq();
         SCB->VTOR = MAIN_PROGRAM_START_ADDRESS;
-        __enable_irq();    
-    
-        __set_MSP(*(__IO uint32_t*) MAIN_PROGRAM_START_ADDRESS); 
-        Jump_To_Application();         
-    }    
+        __enable_irq();
+
+        __set_MSP(*(volatile uint32_t*) MAIN_PROGRAM_START_ADDRESS);
+        Jump_To_Application();
+    }
 }
 
 //------------------------- StartDefaultTask ---------------------------------
@@ -202,18 +202,18 @@ void StartDefaultTask (void *pvParameters)
     int err = 0;
     io_fs_file file;
     uint32_t boot_count = 0;
-    
+
     while(1)
     {
         vTaskDelay(5000);
         err = io_fs_mount();
-        if (err < 0)    
+        if (err < 0)
         {
             printf("Format...\r\n");
             err = io_fs_format();
             err = io_fs_mount();
         }
-    
+
         // read current count
         err = io_fs_file_open(&file, "boot_count", IO_FS_O_RDWR | IO_FS_O_CREAT);
         err = io_fs_file_read(&file, &boot_count, sizeof(boot_count));
@@ -239,7 +239,7 @@ void ConsoleMsgTask (void *pvParameters)
     io_console_init(&_ser, buf, BUFFSIZE);
 
     HAL_GPIO_TogglePin(Debug_GPIO_Port, Debug_Pin);
-    
+
     while (1)
     {
         xSemaphoreTake(xbConsoleRx, 500);
@@ -280,8 +280,8 @@ static void _config_write_word32(uint32_t full_adr, uint32_t word)
         __HAL_FLASH_INSTRUCTION_CACHE_RESET();
 
         __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
-        __HAL_FLASH_DATA_CACHE_ENABLE();          
-        s = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, full_adr, word);    
+        __HAL_FLASH_DATA_CACHE_ENABLE();
+        s = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, full_adr, word);
     }
     HAL_FLASH_Lock();
 }
