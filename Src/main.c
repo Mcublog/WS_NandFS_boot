@@ -167,6 +167,7 @@ void set_boot_mark(void)
         _config_write_word32(MAIN_PROGRAM_START_ADDRESS + (i * 4), data);        
     }
     io_fs_file_close(&firmware);
+    io_fs_file_delete("firmware");
     
     uint32_t *prst = (uint32_t*)(BKP_BASE + MMNGR_BACKUPRAM_OFFSET);
 
