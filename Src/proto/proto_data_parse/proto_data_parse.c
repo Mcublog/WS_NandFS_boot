@@ -265,6 +265,7 @@ uint32_t proto_cmd_set_size_and_end(proto_cmd_t* cmd, uint8_t *b)
         size = size + cmd->param.p[i].size + CL_SIZE_START_STOP_SYMB;
     }
 
+    // set size with the service chars
     size = size + CL_SIZE_START_STOP_SYMB + CL_SIZE_START_STOP_SYMB + CL_SIZE_END_SYMB;
 
     for (i = 0; i < CL_SIZE_START_STOP_SYMB + CRC32_LENGHT; i++)
@@ -278,22 +279,22 @@ uint32_t proto_cmd_set_size_and_end(proto_cmd_t* cmd, uint8_t *b)
        else if (i == 5)   b[size + i] = CL_STOP_SYM;
        else b[size + i] = 0;
     }
-
+    // set size with the service chars and crc lenght
     size = size + CL_SIZE_END_SYMB + CL_SIZE_START_STOP_SYMB + CRC32_LENGHT;
     b[0] = CL_START_SYM;
-    *((uint32_t*)&b[1]) = size;
+    *((uint32_t*) &b[1]) = size;
     b[5] = CL_STOP_SYM;
 
-    *((uint32_t*)&b[crc_idx]) = 0;
+    *((uint32_t*) &b[crc_idx]) = 0;
 
     // crc without stop and service char
     crc = xcrc32 (b, size - CL_SIZE_START_STOP_SYMB - CL_SIZE_END_SYMB-CRC32_LENGHT, 0xffffffff);
-    *((uint32_t*)&b[crc_idx]) = crc;
+    *((uint32_t*) &b[crc_idx]) = crc;
 
     for (i = 0; i < CL_SIZE_END_SYMB; i++)
     {
-       if (i==0) b[size - 2] = '\r';
-       else      b[size - 1] = '\n';
+       if (i == 0) b[size - 2] = '\r';
+       else        b[size - 1] = '\n';
     }
 
     cmd->size_all = size;
@@ -304,9 +305,9 @@ uint32_t proto_cmd_set_size_and_end(proto_cmd_t* cmd, uint8_t *b)
 /brief: CMD parse
 /param: Pointer to buf
 /param: Pointer to CMD
-/return: CLI_OK, CLI_CRC_ERROR, CLI_CORRUPT
+/return: PROTO_OK, PROTO_CRC_ERROR, PROTO_CORRUPT
 -----------------------------------------------------------*/
-uint32_t proto_cmd_parse(const uint8_t* buf, proto_cmd_t* cl_cmd)
+proto_status_t proto_cmd_parse(const uint8_t* buf, proto_cmd_t* cl_cmd)
 {
     uint32_t num = 0;//number of parameters
     uint8_t *b = (uint8_t*)&buf[6];
@@ -327,13 +328,13 @@ uint32_t proto_cmd_parse(const uint8_t* buf, proto_cmd_t* cl_cmd)
             param_type_t type = _get_type_comp(&cl_cmd->type);
             if      (type == PRM_STRING_TYPE) _get_string_params(cl_cmd, num, b);
             else if (type == PRM_BIN_TYPE)    _get_bin_comp(&cl_cmd->param.p[0], b, cl_cmd->size_all);
-            else return CLI_CORRUPT;//Unknow type
+            else return PROTO_CORRUPT;//Unknow type
 
-            return CLI_OK;
+            return PROTO_OK;
         }
-        else return CLI_CRC_ERROR;
+        else return PROTO_CRC_ERROR;
     }
-    return CLI_CORRUPT;
+    return PROTO_CORRUPT;
 }
 
 /*-----------------------------------------------------------
@@ -434,7 +435,7 @@ uint32_t proto_cmd_form(proto_cmd_t* cmd,
     p = _set_cmd_comp(type, &cmd->type, p);
     p = _set_cmd_comp(size, &cmd->size, p);
 
-    num = atoi((const char*)cmd->size.data);
+    num = atoi((const char*) cmd->size.data);
     if (strncmp("string", (const char*)type, sizeof("string")) == 0)
     {
         for (i = 0; i < num; i++)

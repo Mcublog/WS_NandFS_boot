@@ -21,7 +21,7 @@ proto_cmd_t           _cmd_rx = {0};
 
 static void     _proto_start_rx(void);
 static uint32_t _proto_data_check(proto_rx_state_t *state);
-static uint32_t _proto_try_parse(void);
+static proto_status_t _proto_try_parse(void);
 static void     _proto_continue_woking(void);
 //----------------------------------------------------------------------------
 
@@ -31,8 +31,8 @@ static void     _proto_continue_woking(void);
 /return:
 -----------------------------------------------------------*/
 static void _proto_start_rx(void)
-{   
-    io_serial_set_dma_rx_and_idle_irq(_con.ser, _con.buf, _con.maxsize);   
+{
+    io_serial_set_dma_rx_and_idle_irq(_con.ser, _con.buf, _con.maxsize);
 }
 
 /*-----------------------------------------------------------
@@ -44,13 +44,13 @@ static uint32_t _proto_data_check(proto_rx_state_t *state)
 {
     uint32_t bytes_rx = 0, i = 0;
     io_serial_type_h type = io_serial_get_type(_con.ser);
-    
+
     if (type == IO_UART)
-    { 
+    {
         i = (_con.maxsize) - (io_serial_get_dma_bytes_waiting(_con.ser));
     }
     else i = 5;
-  
+
     if (i >= 5)
     {
         bytes_rx = proto_cmd_get_size(_con.buf);
@@ -63,7 +63,7 @@ static uint32_t _proto_data_check(proto_rx_state_t *state)
         {
             *state = PROTO_COMPLETE;
             //Check header, if broken then restart RX
-            if ( check_start_stop_symb(_con.buf)) return bytes_rx;  
+            if ( check_start_stop_symb(_con.buf)) return bytes_rx;
             else
             {
                 _proto_start_rx();
@@ -81,9 +81,9 @@ static uint32_t _proto_data_check(proto_rx_state_t *state)
 /*-----------------------------------------------------------
 /brief: Try to parse data
 /param:
-/return: 0 == CLI_CRC_ERROR, 1 == CLI_OK, 2 == CLI_CORRUPT
+/return: 0 == PROTO_CRC_ERROR, 1 == PROTO_OK, 2 == PROTO_CORRUPT
 -----------------------------------------------------------*/
-static uint32_t _proto_try_parse(void)
+static proto_status_t _proto_try_parse(void)
 {
     return proto_cmd_parse(_con.buf, &_cmd_rx);
 }
@@ -106,11 +106,11 @@ static void _proto_continue_woking(void)
 /return:
 -----------------------------------------------------------*/
 void io_proto_init(io_serial_h *ser, uint8_t *pbuf, uint32_t size)
-{   
+{
     _con.ser       = ser;
     _con.buf       = pbuf;
     _con.maxsize   = size;
-    
+
     _proto_start_rx();
 }
 
@@ -123,17 +123,17 @@ void io_proto_process(void)
 {
     proto_rx_state_t  state = PROTO_COMPLETE;
     uint32_t data_count = _proto_data_check(&state);
-    
+
     if (data_count)
     {
-        uint32_t status = _proto_try_parse();
-        
-        if  (status == CLI_OK)
+        uint32_t proto_status_t = _proto_try_parse();
+
+        if  (status == PROTO_OK)
         {
             printf("Data rx -- OK\r\n");
             cmd_fuction_caller(&_cmd_rx, &_con);
         }
-        else if (status == CLI_CRC_ERROR)
+        else if (status == PROTO_CRC_ERROR)
         {
             printf("Data rx -- CRC32 Error\r\n");
             cmd_function_crc32_error(&_cmd_rx, _con.buf);
