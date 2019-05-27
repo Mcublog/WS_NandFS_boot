@@ -126,7 +126,7 @@ void io_proto_process(void)
 
     if (data_count)
     {
-        uint32_t proto_status_t = _proto_try_parse();
+        proto_status_t status = _proto_try_parse();
 
         if  (status == PROTO_OK)
         {
