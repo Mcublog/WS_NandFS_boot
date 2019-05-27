@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "proto_cmd_list.h"
+
 typedef struct
 {
     uint8_t* data;// Pointer to the start of CMD's components
