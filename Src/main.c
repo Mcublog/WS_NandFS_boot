@@ -21,7 +21,7 @@
 #define MMNGR_BACKUPRAM_OFFSET  (0x0008)
 #define BKP_BASE                (0x4000284C)
 
-#define MAIN_PROGRAM_START_ADDRESS  FIRMWARE_ADDR
+#define MAIN_PROGRAM_START_ADDRESS  0x8010000
 //----------------------------------------------------------------------------
 
 //-----------------------Local variables and function-------------------------
@@ -95,7 +95,7 @@ int main(void)
         // Erase the firmware in the internal flash
         printf("Erase internal flash...\r\n");
         HAL_FLASH_Unlock();
-        FLASH_Erase_Sector(FLASH_SECTOR_5, FLASH_VOLTAGE_RANGE_3);
+        FLASH_Erase_Sector(FLASH_SECTOR_4, FLASH_VOLTAGE_RANGE_3);
         HAL_FLASH_Lock();
     }
     
